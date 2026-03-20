@@ -10,6 +10,7 @@ import java.util.Objects
 /** Look up elevation at one or more points */
 class ElevationLookupParams
 private constructor(
+    private val format: String?,
     private val lat: Double?,
     private val lng: Double?,
     private val locations: String?,
@@ -19,6 +20,9 @@ private constructor(
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
+
+    /** Response format: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
     /** Latitude (single point) */
     fun lat(): Double? = lat
@@ -57,6 +61,7 @@ private constructor(
     /** A builder for [ElevationLookupParams]. */
     class Builder internal constructor() {
 
+        private var format: String? = null
         private var lat: Double? = null
         private var lng: Double? = null
         private var locations: String? = null
@@ -67,6 +72,7 @@ private constructor(
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(elevationLookupParams: ElevationLookupParams) = apply {
+            format = elevationLookupParams.format
             lat = elevationLookupParams.lat
             lng = elevationLookupParams.lng
             locations = elevationLookupParams.locations
@@ -76,6 +82,9 @@ private constructor(
             additionalHeaders = elevationLookupParams.additionalHeaders.toBuilder()
             additionalQueryParams = elevationLookupParams.additionalQueryParams.toBuilder()
         }
+
+        /** Response format: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
         /** Latitude (single point) */
         fun lat(lat: Double?) = apply { this.lat = lat }
@@ -223,6 +232,7 @@ private constructor(
          */
         fun build(): ElevationLookupParams =
             ElevationLookupParams(
+                format,
                 lat,
                 lng,
                 locations,
@@ -239,6 +249,7 @@ private constructor(
     override fun _queryParams(): QueryParams =
         QueryParams.builder()
             .apply {
+                format?.let { put("format", it) }
                 lat?.let { put("lat", it.toString()) }
                 lng?.let { put("lng", it.toString()) }
                 locations?.let { put("locations", it) }
@@ -255,6 +266,7 @@ private constructor(
         }
 
         return other is ElevationLookupParams &&
+            format == other.format &&
             lat == other.lat &&
             lng == other.lng &&
             locations == other.locations &&
@@ -267,6 +279,7 @@ private constructor(
 
     override fun hashCode(): Int =
         Objects.hash(
+            format,
             lat,
             lng,
             locations,
@@ -278,5 +291,5 @@ private constructor(
         )
 
     override fun toString() =
-        "ElevationLookupParams{lat=$lat, lng=$lng, locations=$locations, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "ElevationLookupParams{format=$format, lat=$lat, lng=$lng, locations=$locations, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

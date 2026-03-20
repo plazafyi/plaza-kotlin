@@ -12,10 +12,14 @@ import java.util.Objects
 /** Optimize route through waypoints */
 class OptimizeCreateParams
 private constructor(
+    private val format: String?,
     private val optimizeRequest: OptimizeRequest,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
+
+    /** Response format: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
     /**
      * Route optimization (Travelling Salesman) request. Finds the most efficient order to visit a
@@ -51,15 +55,20 @@ private constructor(
     /** A builder for [OptimizeCreateParams]. */
     class Builder internal constructor() {
 
+        private var format: String? = null
         private var optimizeRequest: OptimizeRequest? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(optimizeCreateParams: OptimizeCreateParams) = apply {
+            format = optimizeCreateParams.format
             optimizeRequest = optimizeCreateParams.optimizeRequest
             additionalHeaders = optimizeCreateParams.additionalHeaders.toBuilder()
             additionalQueryParams = optimizeCreateParams.additionalQueryParams.toBuilder()
         }
+
+        /** Response format: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
         /**
          * Route optimization (Travelling Salesman) request. Finds the most efficient order to visit
@@ -182,6 +191,7 @@ private constructor(
          */
         fun build(): OptimizeCreateParams =
             OptimizeCreateParams(
+                format,
                 checkRequired("optimizeRequest", optimizeRequest),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
@@ -192,7 +202,13 @@ private constructor(
 
     override fun _headers(): Headers = additionalHeaders
 
-    override fun _queryParams(): QueryParams = additionalQueryParams
+    override fun _queryParams(): QueryParams =
+        QueryParams.builder()
+            .apply {
+                format?.let { put("format", it) }
+                putAll(additionalQueryParams)
+            }
+            .build()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
@@ -200,14 +216,15 @@ private constructor(
         }
 
         return other is OptimizeCreateParams &&
+            format == other.format &&
             optimizeRequest == other.optimizeRequest &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(optimizeRequest, additionalHeaders, additionalQueryParams)
+        Objects.hash(format, optimizeRequest, additionalHeaders, additionalQueryParams)
 
     override fun toString() =
-        "OptimizeCreateParams{optimizeRequest=$optimizeRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "OptimizeCreateParams{format=$format, optimizeRequest=$optimizeRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

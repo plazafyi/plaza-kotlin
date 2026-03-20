@@ -15,6 +15,7 @@ class GeocodeAutocompletePostParams
 private constructor(
     private val q: String,
     private val countryCode: String?,
+    private val format: String?,
     private val lang: String?,
     private val lat: Double?,
     private val layer: String?,
@@ -30,6 +31,9 @@ private constructor(
 
     /** ISO 3166-1 alpha-2 country code filter */
     fun countryCode(): String? = countryCode
+
+    /** Response format: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
     /** Language code for localized names (e.g. en, de, fr) */
     fun lang(): String? = lang
@@ -76,6 +80,7 @@ private constructor(
 
         private var q: String? = null
         private var countryCode: String? = null
+        private var format: String? = null
         private var lang: String? = null
         private var lat: Double? = null
         private var layer: String? = null
@@ -88,6 +93,7 @@ private constructor(
         internal fun from(geocodeAutocompletePostParams: GeocodeAutocompletePostParams) = apply {
             q = geocodeAutocompletePostParams.q
             countryCode = geocodeAutocompletePostParams.countryCode
+            format = geocodeAutocompletePostParams.format
             lang = geocodeAutocompletePostParams.lang
             lat = geocodeAutocompletePostParams.lat
             layer = geocodeAutocompletePostParams.layer
@@ -104,6 +110,9 @@ private constructor(
 
         /** ISO 3166-1 alpha-2 country code filter */
         fun countryCode(countryCode: String?) = apply { this.countryCode = countryCode }
+
+        /** Response format: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
         /** Language code for localized names (e.g. en, de, fr) */
         fun lang(lang: String?) = apply { this.lang = lang }
@@ -277,6 +286,7 @@ private constructor(
             GeocodeAutocompletePostParams(
                 checkRequired("q", q),
                 countryCode,
+                format,
                 lang,
                 lat,
                 layer,
@@ -297,6 +307,7 @@ private constructor(
             .apply {
                 put("q", q)
                 countryCode?.let { put("country_code", it) }
+                format?.let { put("format", it) }
                 lang?.let { put("lang", it) }
                 lat?.let { put("lat", it.toString()) }
                 layer?.let { put("layer", it) }
@@ -314,6 +325,7 @@ private constructor(
         return other is GeocodeAutocompletePostParams &&
             q == other.q &&
             countryCode == other.countryCode &&
+            format == other.format &&
             lang == other.lang &&
             lat == other.lat &&
             layer == other.layer &&
@@ -328,6 +340,7 @@ private constructor(
         Objects.hash(
             q,
             countryCode,
+            format,
             lang,
             lat,
             layer,
@@ -339,5 +352,5 @@ private constructor(
         )
 
     override fun toString() =
-        "GeocodeAutocompletePostParams{q=$q, countryCode=$countryCode, lang=$lang, lat=$lat, layer=$layer, limit=$limit, lng=$lng, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
+        "GeocodeAutocompletePostParams{q=$q, countryCode=$countryCode, format=$format, lang=$lang, lat=$lat, layer=$layer, limit=$limit, lng=$lng, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
 }
