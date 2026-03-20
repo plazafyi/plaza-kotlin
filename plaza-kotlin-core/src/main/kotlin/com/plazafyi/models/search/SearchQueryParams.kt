@@ -14,6 +14,10 @@ private constructor(
     private val q: String,
     private val cursor: String?,
     private val limit: Long?,
+    private val outputFields: String?,
+    private val outputInclude: String?,
+    private val outputPrecision: Long?,
+    private val outputSort: String?,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
@@ -26,6 +30,18 @@ private constructor(
 
     /** Maximum results (default 25, max 100) */
     fun limit(): Long? = limit
+
+    /** Comma-separated property fields to include */
+    fun outputFields(): String? = outputFields
+
+    /** Extra computed fields: bbox, distance, center */
+    fun outputInclude(): String? = outputInclude
+
+    /** Coordinate decimal precision (1-15, default 7) */
+    fun outputPrecision(): Long? = outputPrecision
+
+    /** Sort by: distance, name, osm_id */
+    fun outputSort(): String? = outputSort
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -54,6 +70,10 @@ private constructor(
         private var q: String? = null
         private var cursor: String? = null
         private var limit: Long? = null
+        private var outputFields: String? = null
+        private var outputInclude: String? = null
+        private var outputPrecision: Long? = null
+        private var outputSort: String? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
@@ -61,6 +81,10 @@ private constructor(
             q = searchQueryParams.q
             cursor = searchQueryParams.cursor
             limit = searchQueryParams.limit
+            outputFields = searchQueryParams.outputFields
+            outputInclude = searchQueryParams.outputInclude
+            outputPrecision = searchQueryParams.outputPrecision
+            outputSort = searchQueryParams.outputSort
             additionalHeaders = searchQueryParams.additionalHeaders.toBuilder()
             additionalQueryParams = searchQueryParams.additionalQueryParams.toBuilder()
         }
@@ -80,6 +104,27 @@ private constructor(
          * This unboxed primitive overload exists for backwards compatibility.
          */
         fun limit(limit: Long) = limit(limit as Long?)
+
+        /** Comma-separated property fields to include */
+        fun outputFields(outputFields: String?) = apply { this.outputFields = outputFields }
+
+        /** Extra computed fields: bbox, distance, center */
+        fun outputInclude(outputInclude: String?) = apply { this.outputInclude = outputInclude }
+
+        /** Coordinate decimal precision (1-15, default 7) */
+        fun outputPrecision(outputPrecision: Long?) = apply {
+            this.outputPrecision = outputPrecision
+        }
+
+        /**
+         * Alias for [Builder.outputPrecision].
+         *
+         * This unboxed primitive overload exists for backwards compatibility.
+         */
+        fun outputPrecision(outputPrecision: Long) = outputPrecision(outputPrecision as Long?)
+
+        /** Sort by: distance, name, osm_id */
+        fun outputSort(outputSort: String?) = apply { this.outputSort = outputSort }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -196,6 +241,10 @@ private constructor(
                 checkRequired("q", q),
                 cursor,
                 limit,
+                outputFields,
+                outputInclude,
+                outputPrecision,
+                outputSort,
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
             )
@@ -209,6 +258,10 @@ private constructor(
                 put("q", q)
                 cursor?.let { put("cursor", it) }
                 limit?.let { put("limit", it.toString()) }
+                outputFields?.let { put("output[fields]", it) }
+                outputInclude?.let { put("output[include]", it) }
+                outputPrecision?.let { put("output[precision]", it.toString()) }
+                outputSort?.let { put("output[sort]", it) }
                 putAll(additionalQueryParams)
             }
             .build()
@@ -222,13 +275,27 @@ private constructor(
             q == other.q &&
             cursor == other.cursor &&
             limit == other.limit &&
+            outputFields == other.outputFields &&
+            outputInclude == other.outputInclude &&
+            outputPrecision == other.outputPrecision &&
+            outputSort == other.outputSort &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(q, cursor, limit, additionalHeaders, additionalQueryParams)
+        Objects.hash(
+            q,
+            cursor,
+            limit,
+            outputFields,
+            outputInclude,
+            outputPrecision,
+            outputSort,
+            additionalHeaders,
+            additionalQueryParams,
+        )
 
     override fun toString() =
-        "SearchQueryParams{q=$q, cursor=$cursor, limit=$limit, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "SearchQueryParams{q=$q, cursor=$cursor, limit=$limit, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSort=$outputSort, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

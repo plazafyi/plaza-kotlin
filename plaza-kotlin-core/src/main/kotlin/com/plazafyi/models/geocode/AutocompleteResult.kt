@@ -18,7 +18,10 @@ import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
-/** GeoJSON FeatureCollection of autocomplete suggestions */
+/**
+ * GeoJSON FeatureCollection of autocomplete suggestions for partial address input. Optimized for
+ * low-latency type-ahead UIs. Content-Type: `application/geo+json`.
+ */
 class AutocompleteResult
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
@@ -36,6 +39,8 @@ private constructor(
     ) : this(features, type, mutableMapOf())
 
     /**
+     * Autocomplete suggestions ordered by relevance
+     *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
@@ -102,6 +107,7 @@ private constructor(
             additionalProperties = autocompleteResult.additionalProperties.toMutableMap()
         }
 
+        /** Autocomplete suggestions ordered by relevance */
         fun features(features: List<GeocodingFeature>) = features(JsonField.of(features))
 
         /**

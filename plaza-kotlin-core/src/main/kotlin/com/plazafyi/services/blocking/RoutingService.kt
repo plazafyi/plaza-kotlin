@@ -6,15 +6,18 @@ import com.google.errorprone.annotations.MustBeClosed
 import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
-import com.plazafyi.models.GeoJsonFeature
 import com.plazafyi.models.routing.MatrixRequest
 import com.plazafyi.models.routing.MatrixResult
 import com.plazafyi.models.routing.NearestResult
 import com.plazafyi.models.routing.RouteRequest
 import com.plazafyi.models.routing.RouteResult
 import com.plazafyi.models.routing.RoutingIsochroneParams
+import com.plazafyi.models.routing.RoutingIsochronePostParams
+import com.plazafyi.models.routing.RoutingIsochronePostResponse
+import com.plazafyi.models.routing.RoutingIsochroneResponse
 import com.plazafyi.models.routing.RoutingMatrixParams
 import com.plazafyi.models.routing.RoutingNearestParams
+import com.plazafyi.models.routing.RoutingNearestPostParams
 import com.plazafyi.models.routing.RoutingRouteParams
 
 interface RoutingService {
@@ -35,7 +38,13 @@ interface RoutingService {
     fun isochrone(
         params: RoutingIsochroneParams,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): GeoJsonFeature
+    ): RoutingIsochroneResponse
+
+    /** Calculate an isochrone from a point */
+    fun isochronePost(
+        params: RoutingIsochronePostParams,
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): RoutingIsochronePostResponse
 
     /** Calculate a distance matrix between points */
     fun matrix(
@@ -53,6 +62,12 @@ interface RoutingService {
     /** Snap a coordinate to the nearest road */
     fun nearest(
         params: RoutingNearestParams,
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): NearestResult
+
+    /** Snap a coordinate to the nearest road */
+    fun nearestPost(
+        params: RoutingNearestPostParams,
         requestOptions: RequestOptions = RequestOptions.none(),
     ): NearestResult
 
@@ -87,7 +102,17 @@ interface RoutingService {
         fun isochrone(
             params: RoutingIsochroneParams,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<GeoJsonFeature>
+        ): HttpResponseFor<RoutingIsochroneResponse>
+
+        /**
+         * Returns a raw HTTP response for `post /api/v1/isochrone`, but is otherwise the same as
+         * [RoutingService.isochronePost].
+         */
+        @MustBeClosed
+        fun isochronePost(
+            params: RoutingIsochronePostParams,
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<RoutingIsochronePostResponse>
 
         /**
          * Returns a raw HTTP response for `post /api/v1/matrix`, but is otherwise the same as
@@ -117,6 +142,16 @@ interface RoutingService {
         @MustBeClosed
         fun nearest(
             params: RoutingNearestParams,
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<NearestResult>
+
+        /**
+         * Returns a raw HTTP response for `post /api/v1/nearest`, but is otherwise the same as
+         * [RoutingService.nearestPost].
+         */
+        @MustBeClosed
+        fun nearestPost(
+            params: RoutingNearestPostParams,
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<NearestResult>
 

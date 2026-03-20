@@ -18,7 +18,10 @@ import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
-/** GeoJSON FeatureCollection of reverse geocoding results */
+/**
+ * GeoJSON FeatureCollection of reverse geocoding results, ordered by distance from the query point.
+ * Content-Type: `application/geo+json`.
+ */
 class ReverseGeocodeResult
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
@@ -36,6 +39,8 @@ private constructor(
     ) : this(features, type, mutableMapOf())
 
     /**
+     * Reverse geocoding results ordered by distance
+     *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
@@ -102,6 +107,7 @@ private constructor(
             additionalProperties = reverseGeocodeResult.additionalProperties.toMutableMap()
         }
 
+        /** Reverse geocoding results ordered by distance */
         fun features(features: List<GeocodingFeature>) = features(JsonField.of(features))
 
         /**

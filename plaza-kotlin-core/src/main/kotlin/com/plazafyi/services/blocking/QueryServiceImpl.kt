@@ -16,6 +16,8 @@ import com.plazafyi.core.http.json
 import com.plazafyi.core.http.parseable
 import com.plazafyi.core.prepare
 import com.plazafyi.models.FeatureCollection
+import com.plazafyi.models.query.QueryExecuteParams
+import com.plazafyi.models.query.QueryExecuteResponse
 import com.plazafyi.models.query.QueryOverpassParams
 import com.plazafyi.models.query.QuerySparqlParams
 import com.plazafyi.models.query.SparqlResult
@@ -31,6 +33,13 @@ class QueryServiceImpl internal constructor(private val clientOptions: ClientOpt
 
     override fun withOptions(modifier: (ClientOptions.Builder) -> Unit): QueryService =
         QueryServiceImpl(clientOptions.toBuilder().apply(modifier).build())
+
+    override fun execute(
+        params: QueryExecuteParams,
+        requestOptions: RequestOptions,
+    ): QueryExecuteResponse =
+        // post /api/v1/query
+        withRawResponse().execute(params, requestOptions).parse()
 
     override fun overpass(
         params: QueryOverpassParams,
@@ -54,6 +63,34 @@ class QueryServiceImpl internal constructor(private val clientOptions: ClientOpt
         ): QueryService.WithRawResponse =
             QueryServiceImpl.WithRawResponseImpl(clientOptions.toBuilder().apply(modifier).build())
 
+        private val executeHandler: Handler<QueryExecuteResponse> =
+            jsonHandler<QueryExecuteResponse>(clientOptions.jsonMapper)
+
+        override fun execute(
+            params: QueryExecuteParams,
+            requestOptions: RequestOptions,
+        ): HttpResponseFor<QueryExecuteResponse> {
+            val request =
+                HttpRequest.builder()
+                    .method(HttpMethod.POST)
+                    .baseUrl(clientOptions.baseUrl())
+                    .addPathSegments("api", "v1", "query")
+                    .body(json(clientOptions.jsonMapper, params._body()))
+                    .build()
+                    .prepare(clientOptions, params)
+            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
+            val response = clientOptions.httpClient.execute(request, requestOptions)
+            return errorHandler.handle(response).parseable {
+                response
+                    .use { executeHandler.handle(it) }
+                    .also {
+                        if (requestOptions.responseValidation!!) {
+                            it.validate()
+                        }
+                    }
+            }
+        }
+
         private val overpassHandler: Handler<FeatureCollection> =
             jsonHandler<FeatureCollection>(clientOptions.jsonMapper)
 
@@ -66,7 +103,6 @@ class QueryServiceImpl internal constructor(private val clientOptions: ClientOpt
                     .method(HttpMethod.POST)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "overpass")
-                    .putHeader("Accept", "application/geo+json")
                     .body(json(clientOptions.jsonMapper, params._body()))
                     .build()
                     .prepare(clientOptions, params)
@@ -95,7 +131,6 @@ class QueryServiceImpl internal constructor(private val clientOptions: ClientOpt
                     .method(HttpMethod.POST)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "sparql")
-                    .putHeader("Accept", "application/geo+json")
                     .body(json(clientOptions.jsonMapper, params._body()))
                     .build()
                     .prepare(clientOptions, params)

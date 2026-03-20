@@ -13,6 +13,9 @@ private constructor(
     private val lat: Double?,
     private val lng: Double?,
     private val locations: String?,
+    private val outputFields: String?,
+    private val outputInclude: String?,
+    private val outputPrecision: Long?,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
@@ -25,6 +28,15 @@ private constructor(
 
     /** Pipe-separated lng,lat pairs (batch) */
     fun locations(): String? = locations
+
+    /** Comma-separated property fields to include */
+    fun outputFields(): String? = outputFields
+
+    /** Extra computed fields: bbox, center */
+    fun outputInclude(): String? = outputInclude
+
+    /** Coordinate decimal precision (1-15, default 7) */
+    fun outputPrecision(): Long? = outputPrecision
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -48,6 +60,9 @@ private constructor(
         private var lat: Double? = null
         private var lng: Double? = null
         private var locations: String? = null
+        private var outputFields: String? = null
+        private var outputInclude: String? = null
+        private var outputPrecision: Long? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
@@ -55,6 +70,9 @@ private constructor(
             lat = elevationLookupParams.lat
             lng = elevationLookupParams.lng
             locations = elevationLookupParams.locations
+            outputFields = elevationLookupParams.outputFields
+            outputInclude = elevationLookupParams.outputInclude
+            outputPrecision = elevationLookupParams.outputPrecision
             additionalHeaders = elevationLookupParams.additionalHeaders.toBuilder()
             additionalQueryParams = elevationLookupParams.additionalQueryParams.toBuilder()
         }
@@ -81,6 +99,24 @@ private constructor(
 
         /** Pipe-separated lng,lat pairs (batch) */
         fun locations(locations: String?) = apply { this.locations = locations }
+
+        /** Comma-separated property fields to include */
+        fun outputFields(outputFields: String?) = apply { this.outputFields = outputFields }
+
+        /** Extra computed fields: bbox, center */
+        fun outputInclude(outputInclude: String?) = apply { this.outputInclude = outputInclude }
+
+        /** Coordinate decimal precision (1-15, default 7) */
+        fun outputPrecision(outputPrecision: Long?) = apply {
+            this.outputPrecision = outputPrecision
+        }
+
+        /**
+         * Alias for [Builder.outputPrecision].
+         *
+         * This unboxed primitive overload exists for backwards compatibility.
+         */
+        fun outputPrecision(outputPrecision: Long) = outputPrecision(outputPrecision as Long?)
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -190,6 +226,9 @@ private constructor(
                 lat,
                 lng,
                 locations,
+                outputFields,
+                outputInclude,
+                outputPrecision,
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
             )
@@ -203,6 +242,9 @@ private constructor(
                 lat?.let { put("lat", it.toString()) }
                 lng?.let { put("lng", it.toString()) }
                 locations?.let { put("locations", it) }
+                outputFields?.let { put("output[fields]", it) }
+                outputInclude?.let { put("output[include]", it) }
+                outputPrecision?.let { put("output[precision]", it.toString()) }
                 putAll(additionalQueryParams)
             }
             .build()
@@ -216,13 +258,25 @@ private constructor(
             lat == other.lat &&
             lng == other.lng &&
             locations == other.locations &&
+            outputFields == other.outputFields &&
+            outputInclude == other.outputInclude &&
+            outputPrecision == other.outputPrecision &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(lat, lng, locations, additionalHeaders, additionalQueryParams)
+        Objects.hash(
+            lat,
+            lng,
+            locations,
+            outputFields,
+            outputInclude,
+            outputPrecision,
+            additionalHeaders,
+            additionalQueryParams,
+        )
 
     override fun toString() =
-        "ElevationLookupParams{lat=$lat, lng=$lng, locations=$locations, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "ElevationLookupParams{lat=$lat, lng=$lng, locations=$locations, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

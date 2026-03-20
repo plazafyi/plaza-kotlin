@@ -11,11 +11,15 @@ import com.plazafyi.core.JsonField
 import com.plazafyi.core.JsonMissing
 import com.plazafyi.core.JsonValue
 import com.plazafyi.core.checkRequired
+import com.plazafyi.core.toImmutable
 import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
-/** Standard API error response */
+/**
+ * Standard API error envelope. Every error response wraps a single `error` object with a
+ * machine-readable `code`, a human-readable `message`, and optional structured `details`.
+ */
 class Error
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
@@ -29,6 +33,8 @@ private constructor(
     ) : this(error, mutableMapOf())
 
     /**
+     * Error payload
+     *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
@@ -77,6 +83,7 @@ private constructor(
             additionalProperties = error.additionalProperties.toMutableMap()
         }
 
+        /** Error payload */
         fun error(error: InnerError) = error(JsonField.of(error))
 
         /**
@@ -149,12 +156,13 @@ private constructor(
      */
     internal fun validity(): Int = (error.asKnown()?.validity() ?: 0)
 
+    /** Error payload */
     class InnerError
     @JsonCreator(mode = JsonCreator.Mode.DISABLED)
     private constructor(
         private val code: JsonField<String>,
         private val message: JsonField<String>,
-        private val details: JsonValue,
+        private val details: JsonField<Details>,
         private val additionalProperties: MutableMap<String, JsonValue>,
     ) {
 
@@ -162,11 +170,12 @@ private constructor(
         private constructor(
             @JsonProperty("code") @ExcludeMissing code: JsonField<String> = JsonMissing.of(),
             @JsonProperty("message") @ExcludeMissing message: JsonField<String> = JsonMissing.of(),
-            @JsonProperty("details") @ExcludeMissing details: JsonValue = JsonMissing.of(),
+            @JsonProperty("details") @ExcludeMissing details: JsonField<Details> = JsonMissing.of(),
         ) : this(code, message, details, mutableMapOf())
 
         /**
-         * Machine-readable error code
+         * Machine-readable error code (e.g. `invalid_request`, `not_found`, `rate_limited`,
+         * `query_error`, `daily_limit_exceeded`)
          *
          * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is
          *   unexpectedly missing or null (e.g. if the server responded with an unexpected value).
@@ -174,7 +183,7 @@ private constructor(
         fun code(): String = code.getRequired("code")
 
         /**
-         * Human-readable error message
+         * Human-readable explanation of what went wrong
          *
          * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is
          *   unexpectedly missing or null (e.g. if the server responded with an unexpected value).
@@ -182,14 +191,13 @@ private constructor(
         fun message(): String = message.getRequired("message")
 
         /**
-         * Additional error details
+         * Structured details when available (e.g. field-level validation errors, rate limit
+         * metadata, billing info)
          *
-         * This arbitrary value can be deserialized into a custom type using the `convert` method:
-         * ```kotlin
-         * val myObject: MyClass = innerError.details().convert(MyClass::class.java)
-         * ```
+         * @throws PlazaInvalidDataException if the JSON field has an unexpected type (e.g. if the
+         *   server responded with an unexpected value).
          */
-        @JsonProperty("details") @ExcludeMissing fun _details(): JsonValue = details
+        fun details(): Details? = details.getNullable("details")
 
         /**
          * Returns the raw JSON value of [code].
@@ -204,6 +212,13 @@ private constructor(
          * Unlike [message], this method doesn't throw if the JSON field has an unexpected type.
          */
         @JsonProperty("message") @ExcludeMissing fun _message(): JsonField<String> = message
+
+        /**
+         * Returns the raw JSON value of [details].
+         *
+         * Unlike [details], this method doesn't throw if the JSON field has an unexpected type.
+         */
+        @JsonProperty("details") @ExcludeMissing fun _details(): JsonField<Details> = details
 
         @JsonAnySetter
         private fun putAdditionalProperty(key: String, value: JsonValue) {
@@ -236,7 +251,7 @@ private constructor(
 
             private var code: JsonField<String>? = null
             private var message: JsonField<String>? = null
-            private var details: JsonValue = JsonMissing.of()
+            private var details: JsonField<Details> = JsonMissing.of()
             private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
             internal fun from(innerError: InnerError) = apply {
@@ -246,7 +261,10 @@ private constructor(
                 additionalProperties = innerError.additionalProperties.toMutableMap()
             }
 
-            /** Machine-readable error code */
+            /**
+             * Machine-readable error code (e.g. `invalid_request`, `not_found`, `rate_limited`,
+             * `query_error`, `daily_limit_exceeded`)
+             */
             fun code(code: String) = code(JsonField.of(code))
 
             /**
@@ -258,7 +276,7 @@ private constructor(
              */
             fun code(code: JsonField<String>) = apply { this.code = code }
 
-            /** Human-readable error message */
+            /** Human-readable explanation of what went wrong */
             fun message(message: String) = message(JsonField.of(message))
 
             /**
@@ -270,8 +288,20 @@ private constructor(
              */
             fun message(message: JsonField<String>) = apply { this.message = message }
 
-            /** Additional error details */
-            fun details(details: JsonValue) = apply { this.details = details }
+            /**
+             * Structured details when available (e.g. field-level validation errors, rate limit
+             * metadata, billing info)
+             */
+            fun details(details: Details?) = details(JsonField.ofNullable(details))
+
+            /**
+             * Sets [Builder.details] to an arbitrary JSON value.
+             *
+             * You should usually call [Builder.details] with a well-typed [Details] value instead.
+             * This method is primarily for setting the field to an undocumented or not yet
+             * supported value.
+             */
+            fun details(details: JsonField<Details>) = apply { this.details = details }
 
             fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
                 this.additionalProperties.clear()
@@ -323,6 +353,7 @@ private constructor(
 
             code()
             message()
+            details()?.validate()
             validated = true
         }
 
@@ -341,7 +372,113 @@ private constructor(
          * Used for best match union deserialization.
          */
         internal fun validity(): Int =
-            (if (code.asKnown() == null) 0 else 1) + (if (message.asKnown() == null) 0 else 1)
+            (if (code.asKnown() == null) 0 else 1) +
+                (if (message.asKnown() == null) 0 else 1) +
+                (details.asKnown()?.validity() ?: 0)
+
+        /**
+         * Structured details when available (e.g. field-level validation errors, rate limit
+         * metadata, billing info)
+         */
+        class Details
+        @JsonCreator
+        private constructor(
+            @com.fasterxml.jackson.annotation.JsonValue
+            private val additionalProperties: Map<String, JsonValue>
+        ) {
+
+            @JsonAnyGetter
+            @ExcludeMissing
+            fun _additionalProperties(): Map<String, JsonValue> = additionalProperties
+
+            fun toBuilder() = Builder().from(this)
+
+            companion object {
+
+                /** Returns a mutable builder for constructing an instance of [Details]. */
+                fun builder() = Builder()
+            }
+
+            /** A builder for [Details]. */
+            class Builder internal constructor() {
+
+                private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
+
+                internal fun from(details: Details) = apply {
+                    additionalProperties = details.additionalProperties.toMutableMap()
+                }
+
+                fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
+                    this.additionalProperties.clear()
+                    putAllAdditionalProperties(additionalProperties)
+                }
+
+                fun putAdditionalProperty(key: String, value: JsonValue) = apply {
+                    additionalProperties.put(key, value)
+                }
+
+                fun putAllAdditionalProperties(additionalProperties: Map<String, JsonValue>) =
+                    apply {
+                        this.additionalProperties.putAll(additionalProperties)
+                    }
+
+                fun removeAdditionalProperty(key: String) = apply {
+                    additionalProperties.remove(key)
+                }
+
+                fun removeAllAdditionalProperties(keys: Set<String>) = apply {
+                    keys.forEach(::removeAdditionalProperty)
+                }
+
+                /**
+                 * Returns an immutable instance of [Details].
+                 *
+                 * Further updates to this [Builder] will not mutate the returned instance.
+                 */
+                fun build(): Details = Details(additionalProperties.toImmutable())
+            }
+
+            private var validated: Boolean = false
+
+            fun validate(): Details = apply {
+                if (validated) {
+                    return@apply
+                }
+
+                validated = true
+            }
+
+            fun isValid(): Boolean =
+                try {
+                    validate()
+                    true
+                } catch (e: PlazaInvalidDataException) {
+                    false
+                }
+
+            /**
+             * Returns a score indicating how many valid values are contained in this object
+             * recursively.
+             *
+             * Used for best match union deserialization.
+             */
+            internal fun validity(): Int =
+                additionalProperties.count { (_, value) -> !value.isNull() && !value.isMissing() }
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) {
+                    return true
+                }
+
+                return other is Details && additionalProperties == other.additionalProperties
+            }
+
+            private val hashCode: Int by lazy { Objects.hash(additionalProperties) }
+
+            override fun hashCode(): Int = hashCode
+
+            override fun toString() = "Details{additionalProperties=$additionalProperties}"
+        }
 
         override fun equals(other: Any?): Boolean {
             if (this === other) {

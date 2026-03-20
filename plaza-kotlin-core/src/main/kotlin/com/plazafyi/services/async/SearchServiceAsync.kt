@@ -8,6 +8,7 @@ import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
 import com.plazafyi.models.FeatureCollection
 import com.plazafyi.models.search.SearchQueryParams
+import com.plazafyi.models.search.SearchQueryPostParams
 
 interface SearchServiceAsync {
 
@@ -26,6 +27,12 @@ interface SearchServiceAsync {
     /** Search OSM features by name */
     suspend fun query(
         params: SearchQueryParams,
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): FeatureCollection
+
+    /** Search OSM features by name */
+    suspend fun queryPost(
+        params: SearchQueryPostParams,
         requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection
 
@@ -50,6 +57,16 @@ interface SearchServiceAsync {
         @MustBeClosed
         suspend fun query(
             params: SearchQueryParams,
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<FeatureCollection>
+
+        /**
+         * Returns a raw HTTP response for `post /api/v1/search`, but is otherwise the same as
+         * [SearchServiceAsync.queryPost].
+         */
+        @MustBeClosed
+        suspend fun queryPost(
+            params: SearchQueryPostParams,
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<FeatureCollection>
     }
