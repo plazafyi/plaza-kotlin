@@ -18,7 +18,10 @@ import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
-/** GeoJSON FeatureCollection of elevation Point Features with 3D coordinates */
+/**
+ * GeoJSON FeatureCollection of elevation Point Features with 3D coordinates. Order matches the
+ * input coordinates array.
+ */
 class ElevationBatchResult
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
@@ -36,7 +39,7 @@ private constructor(
     ) : this(features, type, mutableMapOf())
 
     /**
-     * Elevation Point Features for each queried point
+     * Elevation results in the same order as input coordinates
      *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
@@ -104,7 +107,7 @@ private constructor(
             additionalProperties = elevationBatchResult.additionalProperties.toMutableMap()
         }
 
-        /** Elevation Point Features for each queried point */
+        /** Elevation results in the same order as input coordinates */
         fun features(features: List<ElevationLookupResult>) = features(JsonField.of(features))
 
         /**

@@ -17,6 +17,7 @@ import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
+/** List of all available datasets. */
 class DatasetList
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
@@ -32,6 +33,8 @@ private constructor(
     ) : this(datasets, mutableMapOf())
 
     /**
+     * Array of dataset metadata objects
+     *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
@@ -80,6 +83,7 @@ private constructor(
             additionalProperties = datasetList.additionalProperties.toMutableMap()
         }
 
+        /** Array of dataset metadata objects */
         fun datasets(datasets: List<Dataset>) = datasets(JsonField.of(datasets))
 
         /**

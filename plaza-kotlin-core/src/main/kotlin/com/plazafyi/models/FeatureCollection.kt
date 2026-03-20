@@ -19,8 +19,18 @@ import java.util.Collections
 import java.util.Objects
 
 /**
- * Bare GeoJSON FeatureCollection. Pagination metadata is returned in HTTP headers (X-Limit,
- * X-Has-More, X-Next-Cursor, X-Next-Offset, Link).
+ * GeoJSON FeatureCollection (RFC 7946). For paginated endpoints, metadata is returned in HTTP
+ * response headers rather than the body:
+ *
+ * | Header          | Description                                      |
+ * |-----------------|--------------------------------------------------|
+ * | `X-Limit`       | Requested result limit                           |
+ * | `X-Has-More`    | `true` if more results exist                     |
+ * | `X-Next-Cursor` | Opaque cursor for next page (cursor pagination)  |
+ * | `X-Next-Offset` | Numeric offset for next page (offset pagination) |
+ * | `Link`          | RFC 8288 `rel="next"` link to the next page      |
+ *
+ * Content-Type is `application/geo+json`.
  */
 class FeatureCollection
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
@@ -39,12 +49,16 @@ private constructor(
     ) : this(features, type, mutableMapOf())
 
     /**
+     * Array of GeoJSON Feature objects
+     *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
     fun features(): List<GeoJsonFeature> = features.getRequired("features")
 
     /**
+     * Always `FeatureCollection`
+     *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
@@ -105,6 +119,7 @@ private constructor(
             additionalProperties = featureCollection.additionalProperties.toMutableMap()
         }
 
+        /** Array of GeoJSON Feature objects */
         fun features(features: List<GeoJsonFeature>) = features(JsonField.of(features))
 
         /**
@@ -130,6 +145,7 @@ private constructor(
                 }
         }
 
+        /** Always `FeatureCollection` */
         fun type(type: Type) = type(JsonField.of(type))
 
         /**
@@ -209,6 +225,7 @@ private constructor(
         (features.asKnown()?.sumOf { it.validity().toInt() } ?: 0) +
             (type.asKnown()?.validity() ?: 0)
 
+    /** Always `FeatureCollection` */
     class Type @JsonCreator private constructor(private val value: JsonField<String>) : Enum {
 
         /**

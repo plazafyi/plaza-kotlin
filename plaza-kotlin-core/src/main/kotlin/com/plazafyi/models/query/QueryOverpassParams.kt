@@ -17,6 +17,10 @@ private constructor(
     private val additionalQueryParams: QueryParams,
 ) : Params {
 
+    /**
+     * Overpass QL query request. The query is executed against Plaza's OSM database and results are
+     * returned as GeoJSON.
+     */
     fun overpassQuery(): OverpassQuery = overpassQuery
 
     fun _additionalBodyProperties(): Map<String, JsonValue> = overpassQuery._additionalProperties()
@@ -55,6 +59,10 @@ private constructor(
             additionalQueryParams = queryOverpassParams.additionalQueryParams.toBuilder()
         }
 
+        /**
+         * Overpass QL query request. The query is executed against Plaza's OSM database and results
+         * are returned as GeoJSON.
+         */
         fun overpassQuery(overpassQuery: OverpassQuery) = apply {
             this.overpassQuery = overpassQuery
         }

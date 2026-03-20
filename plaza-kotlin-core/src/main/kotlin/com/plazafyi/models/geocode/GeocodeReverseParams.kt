@@ -3,7 +3,6 @@
 package com.plazafyi.models.geocode
 
 import com.plazafyi.core.Params
-import com.plazafyi.core.checkRequired
 import com.plazafyi.core.http.Headers
 import com.plazafyi.core.http.QueryParams
 import java.util.Objects
@@ -11,30 +10,34 @@ import java.util.Objects
 /** Reverse geocode a coordinate */
 class GeocodeReverseParams
 private constructor(
-    private val lat: Double,
-    private val lng: Double,
     private val lang: String?,
+    private val lat: Double?,
     private val layer: String?,
     private val limit: Long?,
+    private val lng: Double?,
+    private val near: String?,
     private val radius: Long?,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
 
-    /** Latitude */
-    fun lat(): Double = lat
-
-    /** Longitude */
-    fun lng(): Double = lng
-
     /** Language code for localized names (e.g. en, de, fr) */
     fun lang(): String? = lang
+
+    /** Legacy shorthand. Latitude. Use near param instead. */
+    fun lat(): Double? = lat
 
     /** Filter by layer: house or poi */
     fun layer(): String? = layer
 
     /** Maximum results (default 1, max 20) */
     fun limit(): Long? = limit
+
+    /** Legacy shorthand. Longitude. Use near param instead. */
+    fun lng(): Double? = lng
+
+    /** Point geometry for reverse geocode (lat,lng or GeoJSON). Alternative to lat/lng params. */
+    fun near(): String? = near
 
     /** Search radius in meters (default 200, max 5000) */
     fun radius(): Long? = radius
@@ -49,49 +52,49 @@ private constructor(
 
     companion object {
 
-        /**
-         * Returns a mutable builder for constructing an instance of [GeocodeReverseParams].
-         *
-         * The following fields are required:
-         * ```kotlin
-         * .lat()
-         * .lng()
-         * ```
-         */
+        fun none(): GeocodeReverseParams = builder().build()
+
+        /** Returns a mutable builder for constructing an instance of [GeocodeReverseParams]. */
         fun builder() = Builder()
     }
 
     /** A builder for [GeocodeReverseParams]. */
     class Builder internal constructor() {
 
-        private var lat: Double? = null
-        private var lng: Double? = null
         private var lang: String? = null
+        private var lat: Double? = null
         private var layer: String? = null
         private var limit: Long? = null
+        private var lng: Double? = null
+        private var near: String? = null
         private var radius: Long? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(geocodeReverseParams: GeocodeReverseParams) = apply {
-            lat = geocodeReverseParams.lat
-            lng = geocodeReverseParams.lng
             lang = geocodeReverseParams.lang
+            lat = geocodeReverseParams.lat
             layer = geocodeReverseParams.layer
             limit = geocodeReverseParams.limit
+            lng = geocodeReverseParams.lng
+            near = geocodeReverseParams.near
             radius = geocodeReverseParams.radius
             additionalHeaders = geocodeReverseParams.additionalHeaders.toBuilder()
             additionalQueryParams = geocodeReverseParams.additionalQueryParams.toBuilder()
         }
 
-        /** Latitude */
-        fun lat(lat: Double) = apply { this.lat = lat }
-
-        /** Longitude */
-        fun lng(lng: Double) = apply { this.lng = lng }
-
         /** Language code for localized names (e.g. en, de, fr) */
         fun lang(lang: String?) = apply { this.lang = lang }
+
+        /** Legacy shorthand. Latitude. Use near param instead. */
+        fun lat(lat: Double?) = apply { this.lat = lat }
+
+        /**
+         * Alias for [Builder.lat].
+         *
+         * This unboxed primitive overload exists for backwards compatibility.
+         */
+        fun lat(lat: Double) = lat(lat as Double?)
 
         /** Filter by layer: house or poi */
         fun layer(layer: String?) = apply { this.layer = layer }
@@ -105,6 +108,21 @@ private constructor(
          * This unboxed primitive overload exists for backwards compatibility.
          */
         fun limit(limit: Long) = limit(limit as Long?)
+
+        /** Legacy shorthand. Longitude. Use near param instead. */
+        fun lng(lng: Double?) = apply { this.lng = lng }
+
+        /**
+         * Alias for [Builder.lng].
+         *
+         * This unboxed primitive overload exists for backwards compatibility.
+         */
+        fun lng(lng: Double) = lng(lng as Double?)
+
+        /**
+         * Point geometry for reverse geocode (lat,lng or GeoJSON). Alternative to lat/lng params.
+         */
+        fun near(near: String?) = apply { this.near = near }
 
         /** Search radius in meters (default 200, max 5000) */
         fun radius(radius: Long?) = apply { this.radius = radius }
@@ -218,22 +236,15 @@ private constructor(
          * Returns an immutable instance of [GeocodeReverseParams].
          *
          * Further updates to this [Builder] will not mutate the returned instance.
-         *
-         * The following fields are required:
-         * ```kotlin
-         * .lat()
-         * .lng()
-         * ```
-         *
-         * @throws IllegalStateException if any required field is unset.
          */
         fun build(): GeocodeReverseParams =
             GeocodeReverseParams(
-                checkRequired("lat", lat),
-                checkRequired("lng", lng),
                 lang,
+                lat,
                 layer,
                 limit,
+                lng,
+                near,
                 radius,
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
@@ -245,11 +256,12 @@ private constructor(
     override fun _queryParams(): QueryParams =
         QueryParams.builder()
             .apply {
-                put("lat", lat.toString())
-                put("lng", lng.toString())
                 lang?.let { put("lang", it) }
+                lat?.let { put("lat", it.toString()) }
                 layer?.let { put("layer", it) }
                 limit?.let { put("limit", it.toString()) }
+                lng?.let { put("lng", it.toString()) }
+                near?.let { put("near", it) }
                 radius?.let { put("radius", it.toString()) }
                 putAll(additionalQueryParams)
             }
@@ -261,19 +273,30 @@ private constructor(
         }
 
         return other is GeocodeReverseParams &&
-            lat == other.lat &&
-            lng == other.lng &&
             lang == other.lang &&
+            lat == other.lat &&
             layer == other.layer &&
             limit == other.limit &&
+            lng == other.lng &&
+            near == other.near &&
             radius == other.radius &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(lat, lng, lang, layer, limit, radius, additionalHeaders, additionalQueryParams)
+        Objects.hash(
+            lang,
+            lat,
+            layer,
+            limit,
+            lng,
+            near,
+            radius,
+            additionalHeaders,
+            additionalQueryParams,
+        )
 
     override fun toString() =
-        "GeocodeReverseParams{lat=$lat, lng=$lng, lang=$lang, layer=$layer, limit=$limit, radius=$radius, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "GeocodeReverseParams{lang=$lang, lat=$lat, layer=$layer, limit=$limit, lng=$lng, near=$near, radius=$radius, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

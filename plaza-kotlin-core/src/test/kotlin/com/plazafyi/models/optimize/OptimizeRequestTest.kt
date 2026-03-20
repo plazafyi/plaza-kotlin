@@ -4,7 +4,6 @@ package com.plazafyi.models.optimize
 
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.plazafyi.core.jsonMapper
-import com.plazafyi.models.GeoJsonGeometry
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -15,24 +14,24 @@ internal class OptimizeRequestTest {
         val optimizeRequest =
             OptimizeRequest.builder()
                 .waypoints(
-                    GeoJsonGeometry.builder()
-                        .coordinatesOfDoubles(listOf(0.0))
-                        .type(GeoJsonGeometry.Type.POINT)
-                        .build()
+                    listOf(
+                        OptimizeRequest.Waypoint.builder().lat(48.8566).lng(2.3522).build(),
+                        OptimizeRequest.Waypoint.builder().lat(48.8606).lng(2.3376).build(),
+                        OptimizeRequest.Waypoint.builder().lat(48.8584).lng(2.2945).build(),
+                    )
                 )
                 .mode(OptimizeRequest.Mode.AUTO)
-                .roundtrip(true)
+                .roundtrip(false)
                 .build()
 
         assertThat(optimizeRequest.waypoints())
-            .isEqualTo(
-                GeoJsonGeometry.builder()
-                    .coordinatesOfDoubles(listOf(0.0))
-                    .type(GeoJsonGeometry.Type.POINT)
-                    .build()
+            .containsExactly(
+                OptimizeRequest.Waypoint.builder().lat(48.8566).lng(2.3522).build(),
+                OptimizeRequest.Waypoint.builder().lat(48.8606).lng(2.3376).build(),
+                OptimizeRequest.Waypoint.builder().lat(48.8584).lng(2.2945).build(),
             )
         assertThat(optimizeRequest.mode()).isEqualTo(OptimizeRequest.Mode.AUTO)
-        assertThat(optimizeRequest.roundtrip()).isEqualTo(true)
+        assertThat(optimizeRequest.roundtrip()).isEqualTo(false)
     }
 
     @Test
@@ -41,13 +40,14 @@ internal class OptimizeRequestTest {
         val optimizeRequest =
             OptimizeRequest.builder()
                 .waypoints(
-                    GeoJsonGeometry.builder()
-                        .coordinatesOfDoubles(listOf(0.0))
-                        .type(GeoJsonGeometry.Type.POINT)
-                        .build()
+                    listOf(
+                        OptimizeRequest.Waypoint.builder().lat(48.8566).lng(2.3522).build(),
+                        OptimizeRequest.Waypoint.builder().lat(48.8606).lng(2.3376).build(),
+                        OptimizeRequest.Waypoint.builder().lat(48.8584).lng(2.2945).build(),
+                    )
                 )
                 .mode(OptimizeRequest.Mode.AUTO)
-                .roundtrip(true)
+                .roundtrip(false)
                 .build()
 
         val roundtrippedOptimizeRequest =

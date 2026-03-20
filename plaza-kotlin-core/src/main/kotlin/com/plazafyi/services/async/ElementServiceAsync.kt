@@ -10,8 +10,11 @@ import com.plazafyi.models.FeatureCollection
 import com.plazafyi.models.GeoJsonFeature
 import com.plazafyi.models.elements.BatchRequest
 import com.plazafyi.models.elements.ElementBatchParams
+import com.plazafyi.models.elements.ElementLookupParams
 import com.plazafyi.models.elements.ElementNearbyParams
+import com.plazafyi.models.elements.ElementNearbyPostParams
 import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.elements.ElementQueryPostParams
 import com.plazafyi.models.elements.ElementRetrieveParams
 
 interface ElementServiceAsync {
@@ -54,13 +57,37 @@ interface ElementServiceAsync {
     ): FeatureCollection =
         batch(ElementBatchParams.builder().batchRequest(batchRequest).build(), requestOptions)
 
+    /** Get feature by type and ID */
+    suspend fun lookup(
+        params: ElementLookupParams = ElementLookupParams.none(),
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): GeoJsonFeature
+
+    /** @see lookup */
+    suspend fun lookup(requestOptions: RequestOptions): GeoJsonFeature =
+        lookup(ElementLookupParams.none(), requestOptions)
+
     /** Find features near a geographic point */
     suspend fun nearby(
-        params: ElementNearbyParams,
+        params: ElementNearbyParams = ElementNearbyParams.none(),
         requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection
 
-    /** Query features by bounding box or H3 cell */
+    /** @see nearby */
+    suspend fun nearby(requestOptions: RequestOptions): FeatureCollection =
+        nearby(ElementNearbyParams.none(), requestOptions)
+
+    /** Find features near a geographic point */
+    suspend fun nearbyPost(
+        params: ElementNearbyPostParams = ElementNearbyPostParams.none(),
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): FeatureCollection
+
+    /** @see nearbyPost */
+    suspend fun nearbyPost(requestOptions: RequestOptions): FeatureCollection =
+        nearbyPost(ElementNearbyPostParams.none(), requestOptions)
+
+    /** Query features by spatial predicate, bounding box, or H3 cell */
     suspend fun query(
         params: ElementQueryParams = ElementQueryParams.none(),
         requestOptions: RequestOptions = RequestOptions.none(),
@@ -69,6 +96,16 @@ interface ElementServiceAsync {
     /** @see query */
     suspend fun query(requestOptions: RequestOptions): FeatureCollection =
         query(ElementQueryParams.none(), requestOptions)
+
+    /** Query features by spatial predicate, bounding box, or H3 cell */
+    suspend fun queryPost(
+        params: ElementQueryPostParams = ElementQueryPostParams.none(),
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): FeatureCollection
+
+    /** @see queryPost */
+    suspend fun queryPost(requestOptions: RequestOptions): FeatureCollection =
+        queryPost(ElementQueryPostParams.none(), requestOptions)
 
     /**
      * A view of [ElementServiceAsync] that provides access to raw HTTP responses for each method.
@@ -122,14 +159,49 @@ interface ElementServiceAsync {
             batch(ElementBatchParams.builder().batchRequest(batchRequest).build(), requestOptions)
 
         /**
+         * Returns a raw HTTP response for `post /api/v1/features/lookup`, but is otherwise the same
+         * as [ElementServiceAsync.lookup].
+         */
+        @MustBeClosed
+        suspend fun lookup(
+            params: ElementLookupParams = ElementLookupParams.none(),
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<GeoJsonFeature>
+
+        /** @see lookup */
+        @MustBeClosed
+        suspend fun lookup(requestOptions: RequestOptions): HttpResponseFor<GeoJsonFeature> =
+            lookup(ElementLookupParams.none(), requestOptions)
+
+        /**
          * Returns a raw HTTP response for `get /api/v1/features/nearby`, but is otherwise the same
          * as [ElementServiceAsync.nearby].
          */
         @MustBeClosed
         suspend fun nearby(
-            params: ElementNearbyParams,
+            params: ElementNearbyParams = ElementNearbyParams.none(),
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<FeatureCollection>
+
+        /** @see nearby */
+        @MustBeClosed
+        suspend fun nearby(requestOptions: RequestOptions): HttpResponseFor<FeatureCollection> =
+            nearby(ElementNearbyParams.none(), requestOptions)
+
+        /**
+         * Returns a raw HTTP response for `post /api/v1/features/nearby`, but is otherwise the same
+         * as [ElementServiceAsync.nearbyPost].
+         */
+        @MustBeClosed
+        suspend fun nearbyPost(
+            params: ElementNearbyPostParams = ElementNearbyPostParams.none(),
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<FeatureCollection>
+
+        /** @see nearbyPost */
+        @MustBeClosed
+        suspend fun nearbyPost(requestOptions: RequestOptions): HttpResponseFor<FeatureCollection> =
+            nearbyPost(ElementNearbyPostParams.none(), requestOptions)
 
         /**
          * Returns a raw HTTP response for `get /api/v1/features`, but is otherwise the same as
@@ -145,5 +217,20 @@ interface ElementServiceAsync {
         @MustBeClosed
         suspend fun query(requestOptions: RequestOptions): HttpResponseFor<FeatureCollection> =
             query(ElementQueryParams.none(), requestOptions)
+
+        /**
+         * Returns a raw HTTP response for `post /api/v1/features`, but is otherwise the same as
+         * [ElementServiceAsync.queryPost].
+         */
+        @MustBeClosed
+        suspend fun queryPost(
+            params: ElementQueryPostParams = ElementQueryPostParams.none(),
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<FeatureCollection>
+
+        /** @see queryPost */
+        @MustBeClosed
+        suspend fun queryPost(requestOptions: RequestOptions): HttpResponseFor<FeatureCollection> =
+            queryPost(ElementQueryPostParams.none(), requestOptions)
     }
 }

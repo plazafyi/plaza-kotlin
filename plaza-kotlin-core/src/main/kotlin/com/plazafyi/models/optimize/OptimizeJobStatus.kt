@@ -16,25 +16,29 @@ import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
-/** Status of an async optimization job */
+/**
+ * Status of an async optimization job. When `completed`, the `result` field contains the full
+ * OptimizeCompletedResult. When `processing`, the job is still running — poll again. Failed jobs
+ * return a standard Error response (HTTP 422), not this schema.
+ */
 class OptimizeJobStatus
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
     private val status: JsonField<Status>,
-    private val error: JsonField<String>,
-    private val result: JsonValue,
+    private val result: JsonField<OptimizeCompletedResult>,
     private val additionalProperties: MutableMap<String, JsonValue>,
 ) {
 
     @JsonCreator
     private constructor(
         @JsonProperty("status") @ExcludeMissing status: JsonField<Status> = JsonMissing.of(),
-        @JsonProperty("error") @ExcludeMissing error: JsonField<String> = JsonMissing.of(),
-        @JsonProperty("result") @ExcludeMissing result: JsonValue = JsonMissing.of(),
-    ) : this(status, error, result, mutableMapOf())
+        @JsonProperty("result")
+        @ExcludeMissing
+        result: JsonField<OptimizeCompletedResult> = JsonMissing.of(),
+    ) : this(status, result, mutableMapOf())
 
     /**
-     * Job status
+     * Current job state
      *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
@@ -42,22 +46,13 @@ private constructor(
     fun status(): Status = status.getRequired("status")
 
     /**
-     * Error message when failed
+     * Completed optimization result as a GeoJSON FeatureCollection. Each Feature is a waypoint in
+     * optimized visit order. Top-level fields provide summary statistics.
      *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type (e.g. if the
      *   server responded with an unexpected value).
      */
-    fun error(): String? = error.getNullable("error")
-
-    /**
-     * Optimization result when completed
-     *
-     * This arbitrary value can be deserialized into a custom type using the `convert` method:
-     * ```kotlin
-     * val myObject: MyClass = optimizeJobStatus.result().convert(MyClass::class.java)
-     * ```
-     */
-    @JsonProperty("result") @ExcludeMissing fun _result(): JsonValue = result
+    fun result(): OptimizeCompletedResult? = result.getNullable("result")
 
     /**
      * Returns the raw JSON value of [status].
@@ -67,11 +62,13 @@ private constructor(
     @JsonProperty("status") @ExcludeMissing fun _status(): JsonField<Status> = status
 
     /**
-     * Returns the raw JSON value of [error].
+     * Returns the raw JSON value of [result].
      *
-     * Unlike [error], this method doesn't throw if the JSON field has an unexpected type.
+     * Unlike [result], this method doesn't throw if the JSON field has an unexpected type.
      */
-    @JsonProperty("error") @ExcludeMissing fun _error(): JsonField<String> = error
+    @JsonProperty("result")
+    @ExcludeMissing
+    fun _result(): JsonField<OptimizeCompletedResult> = result
 
     @JsonAnySetter
     private fun putAdditionalProperty(key: String, value: JsonValue) {
@@ -102,18 +99,16 @@ private constructor(
     class Builder internal constructor() {
 
         private var status: JsonField<Status>? = null
-        private var error: JsonField<String> = JsonMissing.of()
-        private var result: JsonValue = JsonMissing.of()
+        private var result: JsonField<OptimizeCompletedResult> = JsonMissing.of()
         private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
         internal fun from(optimizeJobStatus: OptimizeJobStatus) = apply {
             status = optimizeJobStatus.status
-            error = optimizeJobStatus.error
             result = optimizeJobStatus.result
             additionalProperties = optimizeJobStatus.additionalProperties.toMutableMap()
         }
 
-        /** Job status */
+        /** Current job state */
         fun status(status: Status) = status(JsonField.of(status))
 
         /**
@@ -124,19 +119,20 @@ private constructor(
          */
         fun status(status: JsonField<Status>) = apply { this.status = status }
 
-        /** Error message when failed */
-        fun error(error: String?) = error(JsonField.ofNullable(error))
+        /**
+         * Completed optimization result as a GeoJSON FeatureCollection. Each Feature is a waypoint
+         * in optimized visit order. Top-level fields provide summary statistics.
+         */
+        fun result(result: OptimizeCompletedResult?) = result(JsonField.ofNullable(result))
 
         /**
-         * Sets [Builder.error] to an arbitrary JSON value.
+         * Sets [Builder.result] to an arbitrary JSON value.
          *
-         * You should usually call [Builder.error] with a well-typed [String] value instead. This
-         * method is primarily for setting the field to an undocumented or not yet supported value.
+         * You should usually call [Builder.result] with a well-typed [OptimizeCompletedResult]
+         * value instead. This method is primarily for setting the field to an undocumented or not
+         * yet supported value.
          */
-        fun error(error: JsonField<String>) = apply { this.error = error }
-
-        /** Optimization result when completed */
-        fun result(result: JsonValue) = apply { this.result = result }
+        fun result(result: JsonField<OptimizeCompletedResult>) = apply { this.result = result }
 
         fun additionalProperties(additionalProperties: Map<String, JsonValue>) = apply {
             this.additionalProperties.clear()
@@ -172,7 +168,6 @@ private constructor(
         fun build(): OptimizeJobStatus =
             OptimizeJobStatus(
                 checkRequired("status", status),
-                error,
                 result,
                 additionalProperties.toMutableMap(),
             )
@@ -186,7 +181,7 @@ private constructor(
         }
 
         status().validate()
-        error()
+        result()?.validate()
         validated = true
     }
 
@@ -204,9 +199,9 @@ private constructor(
      * Used for best match union deserialization.
      */
     internal fun validity(): Int =
-        (status.asKnown()?.validity() ?: 0) + (if (error.asKnown() == null) 0 else 1)
+        (status.asKnown()?.validity() ?: 0) + (result.asKnown()?.validity() ?: 0)
 
-    /** Job status */
+    /** Current job state */
     class Status @JsonCreator private constructor(private val value: JsonField<String>) : Enum {
 
         /**
@@ -225,8 +220,6 @@ private constructor(
 
             val PROCESSING = of("processing")
 
-            val FAILED = of("failed")
-
             fun of(value: String) = Status(JsonField.of(value))
         }
 
@@ -234,7 +227,6 @@ private constructor(
         enum class Known {
             COMPLETED,
             PROCESSING,
-            FAILED,
         }
 
         /**
@@ -249,7 +241,6 @@ private constructor(
         enum class Value {
             COMPLETED,
             PROCESSING,
-            FAILED,
             /** An enum member indicating that [Status] was instantiated with an unknown value. */
             _UNKNOWN,
         }
@@ -265,7 +256,6 @@ private constructor(
             when (this) {
                 COMPLETED -> Value.COMPLETED
                 PROCESSING -> Value.PROCESSING
-                FAILED -> Value.FAILED
                 else -> Value._UNKNOWN
             }
 
@@ -281,7 +271,6 @@ private constructor(
             when (this) {
                 COMPLETED -> Known.COMPLETED
                 PROCESSING -> Known.PROCESSING
-                FAILED -> Known.FAILED
                 else -> throw PlazaInvalidDataException("Unknown Status: $value")
             }
 
@@ -344,15 +333,14 @@ private constructor(
 
         return other is OptimizeJobStatus &&
             status == other.status &&
-            error == other.error &&
             result == other.result &&
             additionalProperties == other.additionalProperties
     }
 
-    private val hashCode: Int by lazy { Objects.hash(status, error, result, additionalProperties) }
+    private val hashCode: Int by lazy { Objects.hash(status, result, additionalProperties) }
 
     override fun hashCode(): Int = hashCode
 
     override fun toString() =
-        "OptimizeJobStatus{status=$status, error=$error, result=$result, additionalProperties=$additionalProperties}"
+        "OptimizeJobStatus{status=$status, result=$result, additionalProperties=$additionalProperties}"
 }

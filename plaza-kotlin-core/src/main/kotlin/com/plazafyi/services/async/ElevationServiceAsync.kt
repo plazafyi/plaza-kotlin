@@ -9,6 +9,7 @@ import com.plazafyi.core.http.HttpResponseFor
 import com.plazafyi.models.elevation.ElevationBatchParams
 import com.plazafyi.models.elevation.ElevationBatchResult
 import com.plazafyi.models.elevation.ElevationLookupParams
+import com.plazafyi.models.elevation.ElevationLookupPostParams
 import com.plazafyi.models.elevation.ElevationLookupResult
 import com.plazafyi.models.elevation.ElevationProfileParams
 import com.plazafyi.models.elevation.ElevationProfileRequest
@@ -34,16 +35,6 @@ interface ElevationServiceAsync {
         requestOptions: RequestOptions = RequestOptions.none(),
     ): ElevationBatchResult
 
-    /** @see batch */
-    suspend fun batch(
-        elevationProfileRequest: ElevationProfileRequest,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): ElevationBatchResult =
-        batch(
-            ElevationBatchParams.builder().elevationProfileRequest(elevationProfileRequest).build(),
-            requestOptions,
-        )
-
     /** Look up elevation at one or more points */
     suspend fun lookup(
         params: ElevationLookupParams = ElevationLookupParams.none(),
@@ -53,6 +44,16 @@ interface ElevationServiceAsync {
     /** @see lookup */
     suspend fun lookup(requestOptions: RequestOptions): ElevationLookupResult =
         lookup(ElevationLookupParams.none(), requestOptions)
+
+    /** Look up elevation at one or more points */
+    suspend fun lookupPost(
+        params: ElevationLookupPostParams = ElevationLookupPostParams.none(),
+        requestOptions: RequestOptions = RequestOptions.none(),
+    ): ElevationLookupResult
+
+    /** @see lookupPost */
+    suspend fun lookupPost(requestOptions: RequestOptions): ElevationLookupResult =
+        lookupPost(ElevationLookupPostParams.none(), requestOptions)
 
     /** Elevation profile along coordinates */
     suspend fun profile(
@@ -96,19 +97,6 @@ interface ElevationServiceAsync {
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<ElevationBatchResult>
 
-        /** @see batch */
-        @MustBeClosed
-        suspend fun batch(
-            elevationProfileRequest: ElevationProfileRequest,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<ElevationBatchResult> =
-            batch(
-                ElevationBatchParams.builder()
-                    .elevationProfileRequest(elevationProfileRequest)
-                    .build(),
-                requestOptions,
-            )
-
         /**
          * Returns a raw HTTP response for `get /api/v1/elevation`, but is otherwise the same as
          * [ElevationServiceAsync.lookup].
@@ -123,6 +111,23 @@ interface ElevationServiceAsync {
         @MustBeClosed
         suspend fun lookup(requestOptions: RequestOptions): HttpResponseFor<ElevationLookupResult> =
             lookup(ElevationLookupParams.none(), requestOptions)
+
+        /**
+         * Returns a raw HTTP response for `post /api/v1/elevation`, but is otherwise the same as
+         * [ElevationServiceAsync.lookupPost].
+         */
+        @MustBeClosed
+        suspend fun lookupPost(
+            params: ElevationLookupPostParams = ElevationLookupPostParams.none(),
+            requestOptions: RequestOptions = RequestOptions.none(),
+        ): HttpResponseFor<ElevationLookupResult>
+
+        /** @see lookupPost */
+        @MustBeClosed
+        suspend fun lookupPost(
+            requestOptions: RequestOptions
+        ): HttpResponseFor<ElevationLookupResult> =
+            lookupPost(ElevationLookupPostParams.none(), requestOptions)
 
         /**
          * Returns a raw HTTP response for `post /api/v1/elevation/profile`, but is otherwise the

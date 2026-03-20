@@ -19,8 +19,11 @@ import com.plazafyi.core.prepareAsync
 import com.plazafyi.models.FeatureCollection
 import com.plazafyi.models.GeoJsonFeature
 import com.plazafyi.models.elements.ElementBatchParams
+import com.plazafyi.models.elements.ElementLookupParams
 import com.plazafyi.models.elements.ElementNearbyParams
+import com.plazafyi.models.elements.ElementNearbyPostParams
 import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.elements.ElementQueryPostParams
 import com.plazafyi.models.elements.ElementRetrieveParams
 
 class ElementServiceAsyncImpl internal constructor(private val clientOptions: ClientOptions) :
@@ -49,6 +52,13 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
         // post /api/v1/features/batch
         withRawResponse().batch(params, requestOptions).parse()
 
+    override suspend fun lookup(
+        params: ElementLookupParams,
+        requestOptions: RequestOptions,
+    ): GeoJsonFeature =
+        // post /api/v1/features/lookup
+        withRawResponse().lookup(params, requestOptions).parse()
+
     override suspend fun nearby(
         params: ElementNearbyParams,
         requestOptions: RequestOptions,
@@ -56,12 +66,26 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
         // get /api/v1/features/nearby
         withRawResponse().nearby(params, requestOptions).parse()
 
+    override suspend fun nearbyPost(
+        params: ElementNearbyPostParams,
+        requestOptions: RequestOptions,
+    ): FeatureCollection =
+        // post /api/v1/features/nearby
+        withRawResponse().nearbyPost(params, requestOptions).parse()
+
     override suspend fun query(
         params: ElementQueryParams,
         requestOptions: RequestOptions,
     ): FeatureCollection =
         // get /api/v1/features
         withRawResponse().query(params, requestOptions).parse()
+
+    override suspend fun queryPost(
+        params: ElementQueryPostParams,
+        requestOptions: RequestOptions,
+    ): FeatureCollection =
+        // post /api/v1/features
+        withRawResponse().queryPost(params, requestOptions).parse()
 
     class WithRawResponseImpl internal constructor(private val clientOptions: ClientOptions) :
         ElementServiceAsync.WithRawResponse {
@@ -97,7 +121,6 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
                         params._pathParam(0),
                         params._pathParam(1),
                     )
-                    .putHeader("Accept", "application/geo+json")
                     .build()
                     .prepareAsync(clientOptions, params)
             val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
@@ -125,7 +148,6 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
                     .method(HttpMethod.POST)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "features", "batch")
-                    .putHeader("Accept", "application/geo+json")
                     .body(json(clientOptions.jsonMapper, params._body()))
                     .build()
                     .prepareAsync(clientOptions, params)
@@ -134,6 +156,34 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
             return errorHandler.handle(response).parseable {
                 response
                     .use { batchHandler.handle(it) }
+                    .also {
+                        if (requestOptions.responseValidation!!) {
+                            it.validate()
+                        }
+                    }
+            }
+        }
+
+        private val lookupHandler: Handler<GeoJsonFeature> =
+            jsonHandler<GeoJsonFeature>(clientOptions.jsonMapper)
+
+        override suspend fun lookup(
+            params: ElementLookupParams,
+            requestOptions: RequestOptions,
+        ): HttpResponseFor<GeoJsonFeature> {
+            val request =
+                HttpRequest.builder()
+                    .method(HttpMethod.POST)
+                    .baseUrl(clientOptions.baseUrl())
+                    .addPathSegments("api", "v1", "features", "lookup")
+                    .apply { params._body()?.let { body(json(clientOptions.jsonMapper, it)) } }
+                    .build()
+                    .prepareAsync(clientOptions, params)
+            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
+            val response = clientOptions.httpClient.executeAsync(request, requestOptions)
+            return errorHandler.handle(response).parseable {
+                response
+                    .use { lookupHandler.handle(it) }
                     .also {
                         if (requestOptions.responseValidation!!) {
                             it.validate()
@@ -154,7 +204,6 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
                     .method(HttpMethod.GET)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "features", "nearby")
-                    .putHeader("Accept", "application/geo+json")
                     .build()
                     .prepareAsync(clientOptions, params)
             val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
@@ -162,6 +211,34 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
             return errorHandler.handle(response).parseable {
                 response
                     .use { nearbyHandler.handle(it) }
+                    .also {
+                        if (requestOptions.responseValidation!!) {
+                            it.validate()
+                        }
+                    }
+            }
+        }
+
+        private val nearbyPostHandler: Handler<FeatureCollection> =
+            jsonHandler<FeatureCollection>(clientOptions.jsonMapper)
+
+        override suspend fun nearbyPost(
+            params: ElementNearbyPostParams,
+            requestOptions: RequestOptions,
+        ): HttpResponseFor<FeatureCollection> {
+            val request =
+                HttpRequest.builder()
+                    .method(HttpMethod.POST)
+                    .baseUrl(clientOptions.baseUrl())
+                    .addPathSegments("api", "v1", "features", "nearby")
+                    .apply { params._body()?.let { body(json(clientOptions.jsonMapper, it)) } }
+                    .build()
+                    .prepareAsync(clientOptions, params)
+            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
+            val response = clientOptions.httpClient.executeAsync(request, requestOptions)
+            return errorHandler.handle(response).parseable {
+                response
+                    .use { nearbyPostHandler.handle(it) }
                     .also {
                         if (requestOptions.responseValidation!!) {
                             it.validate()
@@ -182,7 +259,6 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
                     .method(HttpMethod.GET)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "features")
-                    .putHeader("Accept", "application/geo+json")
                     .build()
                     .prepareAsync(clientOptions, params)
             val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
@@ -190,6 +266,34 @@ class ElementServiceAsyncImpl internal constructor(private val clientOptions: Cl
             return errorHandler.handle(response).parseable {
                 response
                     .use { queryHandler.handle(it) }
+                    .also {
+                        if (requestOptions.responseValidation!!) {
+                            it.validate()
+                        }
+                    }
+            }
+        }
+
+        private val queryPostHandler: Handler<FeatureCollection> =
+            jsonHandler<FeatureCollection>(clientOptions.jsonMapper)
+
+        override suspend fun queryPost(
+            params: ElementQueryPostParams,
+            requestOptions: RequestOptions,
+        ): HttpResponseFor<FeatureCollection> {
+            val request =
+                HttpRequest.builder()
+                    .method(HttpMethod.POST)
+                    .baseUrl(clientOptions.baseUrl())
+                    .addPathSegments("api", "v1", "features")
+                    .apply { params._body()?.let { body(json(clientOptions.jsonMapper, it)) } }
+                    .build()
+                    .prepareAsync(clientOptions, params)
+            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
+            val response = clientOptions.httpClient.executeAsync(request, requestOptions)
+            return errorHandler.handle(response).parseable {
+                response
+                    .use { queryPostHandler.handle(it) }
                     .also {
                         if (requestOptions.responseValidation!!) {
                             it.validate()
