@@ -12,6 +12,7 @@ class DatasetFeaturesParams
 private constructor(
     private val id: String?,
     private val cursor: String?,
+    private val format: String?,
     private val limit: Long?,
     private val outputBuffer: Double?,
     private val outputCentroid: Boolean?,
@@ -29,6 +30,9 @@ private constructor(
 
     /** Cursor for pagination */
     fun cursor(): String? = cursor
+
+    /** Response format: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
     /** Maximum results */
     fun limit(): Long? = limit
@@ -78,6 +82,7 @@ private constructor(
 
         private var id: String? = null
         private var cursor: String? = null
+        private var format: String? = null
         private var limit: Long? = null
         private var outputBuffer: Double? = null
         private var outputCentroid: Boolean? = null
@@ -93,6 +98,7 @@ private constructor(
         internal fun from(datasetFeaturesParams: DatasetFeaturesParams) = apply {
             id = datasetFeaturesParams.id
             cursor = datasetFeaturesParams.cursor
+            format = datasetFeaturesParams.format
             limit = datasetFeaturesParams.limit
             outputBuffer = datasetFeaturesParams.outputBuffer
             outputCentroid = datasetFeaturesParams.outputCentroid
@@ -110,6 +116,9 @@ private constructor(
 
         /** Cursor for pagination */
         fun cursor(cursor: String?) = apply { this.cursor = cursor }
+
+        /** Response format: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
         /** Maximum results */
         fun limit(limit: Long?) = apply { this.limit = limit }
@@ -293,6 +302,7 @@ private constructor(
             DatasetFeaturesParams(
                 id,
                 cursor,
+                format,
                 limit,
                 outputBuffer,
                 outputCentroid,
@@ -319,6 +329,7 @@ private constructor(
         QueryParams.builder()
             .apply {
                 cursor?.let { put("cursor", it) }
+                format?.let { put("format", it) }
                 limit?.let { put("limit", it.toString()) }
                 outputBuffer?.let { put("output[buffer]", it.toString()) }
                 outputCentroid?.let { put("output[centroid]", it.toString()) }
@@ -340,6 +351,7 @@ private constructor(
         return other is DatasetFeaturesParams &&
             id == other.id &&
             cursor == other.cursor &&
+            format == other.format &&
             limit == other.limit &&
             outputBuffer == other.outputBuffer &&
             outputCentroid == other.outputCentroid &&
@@ -357,6 +369,7 @@ private constructor(
         Objects.hash(
             id,
             cursor,
+            format,
             limit,
             outputBuffer,
             outputCentroid,
@@ -371,5 +384,5 @@ private constructor(
         )
 
     override fun toString() =
-        "DatasetFeaturesParams{id=$id, cursor=$cursor, limit=$limit, outputBuffer=$outputBuffer, outputCentroid=$outputCentroid, outputFields=$outputFields, outputGeometry=$outputGeometry, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSimplify=$outputSimplify, outputSort=$outputSort, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "DatasetFeaturesParams{id=$id, cursor=$cursor, format=$format, limit=$limit, outputBuffer=$outputBuffer, outputCentroid=$outputCentroid, outputFields=$outputFields, outputGeometry=$outputGeometry, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSimplify=$outputSimplify, outputSort=$outputSort, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

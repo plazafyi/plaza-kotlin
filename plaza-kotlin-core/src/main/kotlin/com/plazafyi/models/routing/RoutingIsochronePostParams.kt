@@ -16,6 +16,7 @@ private constructor(
     private val lat: Double,
     private val lng: Double,
     private val time: Double,
+    private val format: String?,
     private val mode: String?,
     private val outputFields: String?,
     private val outputGeometry: Boolean?,
@@ -35,6 +36,9 @@ private constructor(
 
     /** Travel time in seconds (1-7200) */
     fun time(): Double = time
+
+    /** Response format: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
     /** Travel mode (auto, foot, bicycle) */
     fun mode(): String? = mode
@@ -86,6 +90,7 @@ private constructor(
         private var lat: Double? = null
         private var lng: Double? = null
         private var time: Double? = null
+        private var format: String? = null
         private var mode: String? = null
         private var outputFields: String? = null
         private var outputGeometry: Boolean? = null
@@ -100,6 +105,7 @@ private constructor(
             lat = routingIsochronePostParams.lat
             lng = routingIsochronePostParams.lng
             time = routingIsochronePostParams.time
+            format = routingIsochronePostParams.format
             mode = routingIsochronePostParams.mode
             outputFields = routingIsochronePostParams.outputFields
             outputGeometry = routingIsochronePostParams.outputGeometry
@@ -120,6 +126,9 @@ private constructor(
 
         /** Travel time in seconds (1-7200) */
         fun time(time: Double) = apply { this.time = time }
+
+        /** Response format: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
         /** Travel mode (auto, foot, bicycle) */
         fun mode(mode: String?) = apply { this.mode = mode }
@@ -303,6 +312,7 @@ private constructor(
                 checkRequired("lat", lat),
                 checkRequired("lng", lng),
                 checkRequired("time", time),
+                format,
                 mode,
                 outputFields,
                 outputGeometry,
@@ -325,6 +335,7 @@ private constructor(
                 put("lat", lat.toString())
                 put("lng", lng.toString())
                 put("time", time.toString())
+                format?.let { put("format", it) }
                 mode?.let { put("mode", it) }
                 outputFields?.let { put("output[fields]", it) }
                 outputGeometry?.let { put("output[geometry]", it.toString()) }
@@ -344,6 +355,7 @@ private constructor(
             lat == other.lat &&
             lng == other.lng &&
             time == other.time &&
+            format == other.format &&
             mode == other.mode &&
             outputFields == other.outputFields &&
             outputGeometry == other.outputGeometry &&
@@ -360,6 +372,7 @@ private constructor(
             lat,
             lng,
             time,
+            format,
             mode,
             outputFields,
             outputGeometry,
@@ -372,5 +385,5 @@ private constructor(
         )
 
     override fun toString() =
-        "RoutingIsochronePostParams{lat=$lat, lng=$lng, time=$time, mode=$mode, outputFields=$outputFields, outputGeometry=$outputGeometry, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSimplify=$outputSimplify, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
+        "RoutingIsochronePostParams{lat=$lat, lng=$lng, time=$time, format=$format, mode=$mode, outputFields=$outputFields, outputGeometry=$outputGeometry, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSimplify=$outputSimplify, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
 }

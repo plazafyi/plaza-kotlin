@@ -12,10 +12,14 @@ import java.util.Objects
 /** Calculate a route between two points */
 class RoutingRouteParams
 private constructor(
+    private val format: String?,
     private val routeRequest: RouteRequest,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
+
+    /** Response format for alternatives: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
     /**
      * Request body for route calculation. Origin and destination are lat/lng coordinate objects.
@@ -50,15 +54,20 @@ private constructor(
     /** A builder for [RoutingRouteParams]. */
     class Builder internal constructor() {
 
+        private var format: String? = null
         private var routeRequest: RouteRequest? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(routingRouteParams: RoutingRouteParams) = apply {
+            format = routingRouteParams.format
             routeRequest = routingRouteParams.routeRequest
             additionalHeaders = routingRouteParams.additionalHeaders.toBuilder()
             additionalQueryParams = routingRouteParams.additionalQueryParams.toBuilder()
         }
+
+        /** Response format for alternatives: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
         /**
          * Request body for route calculation. Origin and destination are lat/lng coordinate
@@ -179,6 +188,7 @@ private constructor(
          */
         fun build(): RoutingRouteParams =
             RoutingRouteParams(
+                format,
                 checkRequired("routeRequest", routeRequest),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
@@ -189,7 +199,13 @@ private constructor(
 
     override fun _headers(): Headers = additionalHeaders
 
-    override fun _queryParams(): QueryParams = additionalQueryParams
+    override fun _queryParams(): QueryParams =
+        QueryParams.builder()
+            .apply {
+                format?.let { put("format", it) }
+                putAll(additionalQueryParams)
+            }
+            .build()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
@@ -197,14 +213,15 @@ private constructor(
         }
 
         return other is RoutingRouteParams &&
+            format == other.format &&
             routeRequest == other.routeRequest &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(routeRequest, additionalHeaders, additionalQueryParams)
+        Objects.hash(format, routeRequest, additionalHeaders, additionalQueryParams)
 
     override fun toString() =
-        "RoutingRouteParams{routeRequest=$routeRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "RoutingRouteParams{format=$format, routeRequest=$routeRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }
