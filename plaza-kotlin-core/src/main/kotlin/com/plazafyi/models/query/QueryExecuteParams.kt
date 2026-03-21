@@ -253,8 +253,7 @@ private constructor(
 
     /**
      * Multi-step query pipeline. Steps are executed in order, with each step potentially using
-     * results from previous steps. Supports chaining Overpass QL, SPARQL, filter, and transform
-     * operations.
+     * results from previous steps. Supports chaining Overpass QL, filter, and transform operations.
      */
     class Body
     @JsonCreator(mode = JsonCreator.Mode.DISABLED)
@@ -443,7 +442,7 @@ private constructor(
         ) : this(type, query, mutableMapOf())
 
         /**
-         * Step type: `overpass`, `sparql`, `filter`, or `transform`
+         * Step type: `overpass`, `filter`, or `transform`
          *
          * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is
          *   unexpectedly missing or null (e.g. if the server responded with an unexpected value).
@@ -451,7 +450,7 @@ private constructor(
         fun type(): Type = type.getRequired("type")
 
         /**
-         * Query string for this step (required for overpass/sparql steps)
+         * Query string for this step (required for overpass steps)
          *
          * @throws PlazaInvalidDataException if the JSON field has an unexpected type (e.g. if the
          *   server responded with an unexpected value).
@@ -510,7 +509,7 @@ private constructor(
                 additionalProperties = step.additionalProperties.toMutableMap()
             }
 
-            /** Step type: `overpass`, `sparql`, `filter`, or `transform` */
+            /** Step type: `overpass`, `filter`, or `transform` */
             fun type(type: Type) = type(JsonField.of(type))
 
             /**
@@ -522,7 +521,7 @@ private constructor(
              */
             fun type(type: JsonField<Type>) = apply { this.type = type }
 
-            /** Query string for this step (required for overpass/sparql steps) */
+            /** Query string for this step (required for overpass steps) */
             fun query(query: String) = query(JsonField.of(query))
 
             /**
@@ -598,7 +597,7 @@ private constructor(
         internal fun validity(): Int =
             (type.asKnown()?.validity() ?: 0) + (if (query.asKnown() == null) 0 else 1)
 
-        /** Step type: `overpass`, `sparql`, `filter`, or `transform` */
+        /** Step type: `overpass`, `filter`, or `transform` */
         class Type @JsonCreator private constructor(private val value: JsonField<String>) : Enum {
 
             /**
@@ -615,8 +614,6 @@ private constructor(
 
                 val OVERPASS = of("overpass")
 
-                val SPARQL = of("sparql")
-
                 val FILTER = of("filter")
 
                 val TRANSFORM = of("transform")
@@ -627,7 +624,6 @@ private constructor(
             /** An enum containing [Type]'s known values. */
             enum class Known {
                 OVERPASS,
-                SPARQL,
                 FILTER,
                 TRANSFORM,
             }
@@ -643,7 +639,6 @@ private constructor(
              */
             enum class Value {
                 OVERPASS,
-                SPARQL,
                 FILTER,
                 TRANSFORM,
                 /** An enum member indicating that [Type] was instantiated with an unknown value. */
@@ -660,7 +655,6 @@ private constructor(
             fun value(): Value =
                 when (this) {
                     OVERPASS -> Value.OVERPASS
-                    SPARQL -> Value.SPARQL
                     FILTER -> Value.FILTER
                     TRANSFORM -> Value.TRANSFORM
                     else -> Value._UNKNOWN
@@ -678,7 +672,6 @@ private constructor(
             fun known(): Known =
                 when (this) {
                     OVERPASS -> Known.OVERPASS
-                    SPARQL -> Known.SPARQL
                     FILTER -> Known.FILTER
                     TRANSFORM -> Known.TRANSFORM
                     else -> throw PlazaInvalidDataException("Unknown Type: $value")

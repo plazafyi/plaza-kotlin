@@ -11,9 +11,6 @@ import com.plazafyi.models.query.OverpassQuery
 import com.plazafyi.models.query.QueryExecuteParams
 import com.plazafyi.models.query.QueryExecuteResponse
 import com.plazafyi.models.query.QueryOverpassParams
-import com.plazafyi.models.query.QuerySparqlParams
-import com.plazafyi.models.query.SparqlQuery
-import com.plazafyi.models.query.SparqlResult
 
 interface QueryService {
 
@@ -47,19 +44,6 @@ interface QueryService {
         requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection =
         overpass(QueryOverpassParams.builder().overpassQuery(overpassQuery).build(), requestOptions)
-
-    /** Execute a SPARQL query */
-    fun sparql(
-        params: QuerySparqlParams,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): SparqlResult
-
-    /** @see sparql */
-    fun sparql(
-        sparqlQuery: SparqlQuery,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): SparqlResult =
-        sparql(QuerySparqlParams.builder().sparqlQuery(sparqlQuery).build(), requestOptions)
 
     /** A view of [QueryService] that provides access to raw HTTP responses for each method. */
     interface WithRawResponse {
@@ -101,23 +85,5 @@ interface QueryService {
                 QueryOverpassParams.builder().overpassQuery(overpassQuery).build(),
                 requestOptions,
             )
-
-        /**
-         * Returns a raw HTTP response for `post /api/v1/sparql`, but is otherwise the same as
-         * [QueryService.sparql].
-         */
-        @MustBeClosed
-        fun sparql(
-            params: QuerySparqlParams,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<SparqlResult>
-
-        /** @see sparql */
-        @MustBeClosed
-        fun sparql(
-            sparqlQuery: SparqlQuery,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<SparqlResult> =
-            sparql(QuerySparqlParams.builder().sparqlQuery(sparqlQuery).build(), requestOptions)
     }
 }
