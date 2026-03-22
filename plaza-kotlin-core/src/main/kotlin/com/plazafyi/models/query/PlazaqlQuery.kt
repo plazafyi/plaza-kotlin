@@ -16,10 +16,10 @@ import java.util.Collections
 import java.util.Objects
 
 /**
- * Overpass QL query request. The query is executed against Plaza's OSM database and results are
+ * PlazaQL query request. The query is executed against Plaza's OSM database and results are
  * returned as GeoJSON.
  */
-class OverpassQuery
+class PlazaqlQuery
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
     private val data: JsonField<String>,
@@ -32,7 +32,7 @@ private constructor(
     ) : this(data, mutableMapOf())
 
     /**
-     * Overpass QL query string
+     * PlazaQL query string
      *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
@@ -61,7 +61,7 @@ private constructor(
     companion object {
 
         /**
-         * Returns a mutable builder for constructing an instance of [OverpassQuery].
+         * Returns a mutable builder for constructing an instance of [PlazaqlQuery].
          *
          * The following fields are required:
          * ```kotlin
@@ -71,18 +71,18 @@ private constructor(
         fun builder() = Builder()
     }
 
-    /** A builder for [OverpassQuery]. */
+    /** A builder for [PlazaqlQuery]. */
     class Builder internal constructor() {
 
         private var data: JsonField<String>? = null
         private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
-        internal fun from(overpassQuery: OverpassQuery) = apply {
-            data = overpassQuery.data
-            additionalProperties = overpassQuery.additionalProperties.toMutableMap()
+        internal fun from(plazaqlQuery: PlazaqlQuery) = apply {
+            data = plazaqlQuery.data
+            additionalProperties = plazaqlQuery.additionalProperties.toMutableMap()
         }
 
-        /** Overpass QL query string */
+        /** PlazaQL query string */
         fun data(data: String) = data(JsonField.of(data))
 
         /**
@@ -113,7 +113,7 @@ private constructor(
         }
 
         /**
-         * Returns an immutable instance of [OverpassQuery].
+         * Returns an immutable instance of [PlazaqlQuery].
          *
          * Further updates to this [Builder] will not mutate the returned instance.
          *
@@ -124,13 +124,13 @@ private constructor(
          *
          * @throws IllegalStateException if any required field is unset.
          */
-        fun build(): OverpassQuery =
-            OverpassQuery(checkRequired("data", data), additionalProperties.toMutableMap())
+        fun build(): PlazaqlQuery =
+            PlazaqlQuery(checkRequired("data", data), additionalProperties.toMutableMap())
     }
 
     private var validated: Boolean = false
 
-    fun validate(): OverpassQuery = apply {
+    fun validate(): PlazaqlQuery = apply {
         if (validated) {
             return@apply
         }
@@ -159,7 +159,7 @@ private constructor(
             return true
         }
 
-        return other is OverpassQuery &&
+        return other is PlazaqlQuery &&
             data == other.data &&
             additionalProperties == other.additionalProperties
     }
@@ -168,6 +168,5 @@ private constructor(
 
     override fun hashCode(): Int = hashCode
 
-    override fun toString() =
-        "OverpassQuery{data=$data, additionalProperties=$additionalProperties}"
+    override fun toString() = "PlazaqlQuery{data=$data, additionalProperties=$additionalProperties}"
 }

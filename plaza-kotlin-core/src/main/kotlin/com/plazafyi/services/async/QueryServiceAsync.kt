@@ -7,10 +7,8 @@ import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
 import com.plazafyi.models.FeatureCollection
-import com.plazafyi.models.query.OverpassQuery
+import com.plazafyi.models.query.PlazaqlQuery
 import com.plazafyi.models.query.QueryExecuteParams
-import com.plazafyi.models.query.QueryExecuteResponse
-import com.plazafyi.models.query.QueryOverpassParams
 
 interface QueryServiceAsync {
 
@@ -26,24 +24,18 @@ interface QueryServiceAsync {
      */
     fun withOptions(modifier: (ClientOptions.Builder) -> Unit): QueryServiceAsync
 
-    /** Execute a multi-step query pipeline */
+    /** Execute a PlazaQL query */
     suspend fun execute(
         params: QueryExecuteParams,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): QueryExecuteResponse
-
-    /** Execute an Overpass QL query */
-    suspend fun overpass(
-        params: QueryOverpassParams,
-        requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection
 
-    /** @see overpass */
-    suspend fun overpass(
-        overpassQuery: OverpassQuery,
+    /** @see execute */
+    suspend fun execute(
+        plazaqlQuery: PlazaqlQuery,
         requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection =
-        overpass(QueryOverpassParams.builder().overpassQuery(overpassQuery).build(), requestOptions)
+        execute(QueryExecuteParams.builder().plazaqlQuery(plazaqlQuery).build(), requestOptions)
 
     /** A view of [QueryServiceAsync] that provides access to raw HTTP responses for each method. */
     interface WithRawResponse {
@@ -65,27 +57,14 @@ interface QueryServiceAsync {
         suspend fun execute(
             params: QueryExecuteParams,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<QueryExecuteResponse>
-
-        /**
-         * Returns a raw HTTP response for `post /api/v1/overpass`, but is otherwise the same as
-         * [QueryServiceAsync.overpass].
-         */
-        @MustBeClosed
-        suspend fun overpass(
-            params: QueryOverpassParams,
-            requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<FeatureCollection>
 
-        /** @see overpass */
+        /** @see execute */
         @MustBeClosed
-        suspend fun overpass(
-            overpassQuery: OverpassQuery,
+        suspend fun execute(
+            plazaqlQuery: PlazaqlQuery,
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<FeatureCollection> =
-            overpass(
-                QueryOverpassParams.builder().overpassQuery(overpassQuery).build(),
-                requestOptions,
-            )
+            execute(QueryExecuteParams.builder().plazaqlQuery(plazaqlQuery).build(), requestOptions)
     }
 }

@@ -17,8 +17,6 @@ import com.plazafyi.core.http.parseable
 import com.plazafyi.core.prepareAsync
 import com.plazafyi.models.FeatureCollection
 import com.plazafyi.models.query.QueryExecuteParams
-import com.plazafyi.models.query.QueryExecuteResponse
-import com.plazafyi.models.query.QueryOverpassParams
 
 class QueryServiceAsyncImpl internal constructor(private val clientOptions: ClientOptions) :
     QueryServiceAsync {
@@ -35,16 +33,9 @@ class QueryServiceAsyncImpl internal constructor(private val clientOptions: Clie
     override suspend fun execute(
         params: QueryExecuteParams,
         requestOptions: RequestOptions,
-    ): QueryExecuteResponse =
+    ): FeatureCollection =
         // post /api/v1/query
         withRawResponse().execute(params, requestOptions).parse()
-
-    override suspend fun overpass(
-        params: QueryOverpassParams,
-        requestOptions: RequestOptions,
-    ): FeatureCollection =
-        // post /api/v1/overpass
-        withRawResponse().overpass(params, requestOptions).parse()
 
     class WithRawResponseImpl internal constructor(private val clientOptions: ClientOptions) :
         QueryServiceAsync.WithRawResponse {
@@ -59,13 +50,13 @@ class QueryServiceAsyncImpl internal constructor(private val clientOptions: Clie
                 clientOptions.toBuilder().apply(modifier).build()
             )
 
-        private val executeHandler: Handler<QueryExecuteResponse> =
-            jsonHandler<QueryExecuteResponse>(clientOptions.jsonMapper)
+        private val executeHandler: Handler<FeatureCollection> =
+            jsonHandler<FeatureCollection>(clientOptions.jsonMapper)
 
         override suspend fun execute(
             params: QueryExecuteParams,
             requestOptions: RequestOptions,
-        ): HttpResponseFor<QueryExecuteResponse> {
+        ): HttpResponseFor<FeatureCollection> {
             val request =
                 HttpRequest.builder()
                     .method(HttpMethod.POST)
@@ -79,34 +70,6 @@ class QueryServiceAsyncImpl internal constructor(private val clientOptions: Clie
             return errorHandler.handle(response).parseable {
                 response
                     .use { executeHandler.handle(it) }
-                    .also {
-                        if (requestOptions.responseValidation!!) {
-                            it.validate()
-                        }
-                    }
-            }
-        }
-
-        private val overpassHandler: Handler<FeatureCollection> =
-            jsonHandler<FeatureCollection>(clientOptions.jsonMapper)
-
-        override suspend fun overpass(
-            params: QueryOverpassParams,
-            requestOptions: RequestOptions,
-        ): HttpResponseFor<FeatureCollection> {
-            val request =
-                HttpRequest.builder()
-                    .method(HttpMethod.POST)
-                    .baseUrl(clientOptions.baseUrl())
-                    .addPathSegments("api", "v1", "overpass")
-                    .body(json(clientOptions.jsonMapper, params._body()))
-                    .build()
-                    .prepareAsync(clientOptions, params)
-            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
-            val response = clientOptions.httpClient.executeAsync(request, requestOptions)
-            return errorHandler.handle(response).parseable {
-                response
-                    .use { overpassHandler.handle(it) }
                     .also {
                         if (requestOptions.responseValidation!!) {
                             it.validate()
