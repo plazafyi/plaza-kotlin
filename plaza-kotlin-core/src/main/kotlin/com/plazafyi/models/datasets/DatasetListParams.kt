@@ -7,12 +7,16 @@ import com.plazafyi.core.http.Headers
 import com.plazafyi.core.http.QueryParams
 import java.util.Objects
 
-/** List all datasets */
+/** List datasets */
 class DatasetListParams
 private constructor(
+    private val scope: String?,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
+
+    /** Filter by scope: plaza, user. Default shows user's own + plaza datasets. */
+    fun scope(): String? = scope
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -33,13 +37,18 @@ private constructor(
     /** A builder for [DatasetListParams]. */
     class Builder internal constructor() {
 
+        private var scope: String? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(datasetListParams: DatasetListParams) = apply {
+            scope = datasetListParams.scope
             additionalHeaders = datasetListParams.additionalHeaders.toBuilder()
             additionalQueryParams = datasetListParams.additionalQueryParams.toBuilder()
         }
+
+        /** Filter by scope: plaza, user. Default shows user's own + plaza datasets. */
+        fun scope(scope: String?) = apply { this.scope = scope }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -145,12 +154,18 @@ private constructor(
          * Further updates to this [Builder] will not mutate the returned instance.
          */
         fun build(): DatasetListParams =
-            DatasetListParams(additionalHeaders.build(), additionalQueryParams.build())
+            DatasetListParams(scope, additionalHeaders.build(), additionalQueryParams.build())
     }
 
     override fun _headers(): Headers = additionalHeaders
 
-    override fun _queryParams(): QueryParams = additionalQueryParams
+    override fun _queryParams(): QueryParams =
+        QueryParams.builder()
+            .apply {
+                scope?.let { put("scope", it) }
+                putAll(additionalQueryParams)
+            }
+            .build()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
@@ -158,12 +173,13 @@ private constructor(
         }
 
         return other is DatasetListParams &&
+            scope == other.scope &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
-    override fun hashCode(): Int = Objects.hash(additionalHeaders, additionalQueryParams)
+    override fun hashCode(): Int = Objects.hash(scope, additionalHeaders, additionalQueryParams)
 
     override fun toString() =
-        "DatasetListParams{additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "DatasetListParams{scope=$scope, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

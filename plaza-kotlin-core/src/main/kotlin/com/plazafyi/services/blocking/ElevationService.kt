@@ -6,10 +6,8 @@ import com.google.errorprone.annotations.MustBeClosed
 import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
-import com.plazafyi.models.elevation.ElevationBatchParams
-import com.plazafyi.models.elevation.ElevationBatchResult
 import com.plazafyi.models.elevation.ElevationLookupParams
-import com.plazafyi.models.elevation.ElevationLookupPostParams
+import com.plazafyi.models.elevation.ElevationLookupRequest
 import com.plazafyi.models.elevation.ElevationLookupResult
 import com.plazafyi.models.elevation.ElevationProfileParams
 import com.plazafyi.models.elevation.ElevationProfileRequest
@@ -29,31 +27,21 @@ interface ElevationService {
      */
     fun withOptions(modifier: (ClientOptions.Builder) -> Unit): ElevationService
 
-    /** Look up elevation for multiple coordinates */
-    fun batch(
-        params: ElevationBatchParams,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): ElevationBatchResult
-
     /** Look up elevation at one or more points */
     fun lookup(
-        params: ElevationLookupParams = ElevationLookupParams.none(),
+        params: ElevationLookupParams,
         requestOptions: RequestOptions = RequestOptions.none(),
     ): ElevationLookupResult
 
     /** @see lookup */
-    fun lookup(requestOptions: RequestOptions): ElevationLookupResult =
-        lookup(ElevationLookupParams.none(), requestOptions)
-
-    /** Look up elevation at one or more points */
-    fun lookupPost(
-        params: ElevationLookupPostParams = ElevationLookupPostParams.none(),
+    fun lookup(
+        elevationLookupRequest: ElevationLookupRequest,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): ElevationLookupResult
-
-    /** @see lookupPost */
-    fun lookupPost(requestOptions: RequestOptions): ElevationLookupResult =
-        lookupPost(ElevationLookupPostParams.none(), requestOptions)
+    ): ElevationLookupResult =
+        lookup(
+            ElevationLookupParams.builder().elevationLookupRequest(elevationLookupRequest).build(),
+            requestOptions,
+        )
 
     /** Elevation profile along coordinates */
     fun profile(
@@ -84,44 +72,27 @@ interface ElevationService {
         fun withOptions(modifier: (ClientOptions.Builder) -> Unit): ElevationService.WithRawResponse
 
         /**
-         * Returns a raw HTTP response for `post /api/v1/elevation/batch`, but is otherwise the same
-         * as [ElevationService.batch].
-         */
-        @MustBeClosed
-        fun batch(
-            params: ElevationBatchParams,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<ElevationBatchResult>
-
-        /**
-         * Returns a raw HTTP response for `get /api/v1/elevation`, but is otherwise the same as
+         * Returns a raw HTTP response for `post /api/v1/elevation`, but is otherwise the same as
          * [ElevationService.lookup].
          */
         @MustBeClosed
         fun lookup(
-            params: ElevationLookupParams = ElevationLookupParams.none(),
+            params: ElevationLookupParams,
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<ElevationLookupResult>
 
         /** @see lookup */
         @MustBeClosed
-        fun lookup(requestOptions: RequestOptions): HttpResponseFor<ElevationLookupResult> =
-            lookup(ElevationLookupParams.none(), requestOptions)
-
-        /**
-         * Returns a raw HTTP response for `post /api/v1/elevation`, but is otherwise the same as
-         * [ElevationService.lookupPost].
-         */
-        @MustBeClosed
-        fun lookupPost(
-            params: ElevationLookupPostParams = ElevationLookupPostParams.none(),
+        fun lookup(
+            elevationLookupRequest: ElevationLookupRequest,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<ElevationLookupResult>
-
-        /** @see lookupPost */
-        @MustBeClosed
-        fun lookupPost(requestOptions: RequestOptions): HttpResponseFor<ElevationLookupResult> =
-            lookupPost(ElevationLookupPostParams.none(), requestOptions)
+        ): HttpResponseFor<ElevationLookupResult> =
+            lookup(
+                ElevationLookupParams.builder()
+                    .elevationLookupRequest(elevationLookupRequest)
+                    .build(),
+                requestOptions,
+            )
 
         /**
          * Returns a raw HTTP response for `post /api/v1/elevation/profile`, but is otherwise the

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.plazafyi.core.JsonValue
 import com.plazafyi.core.jsonMapper
 import com.plazafyi.models.GeoJsonFeature
-import com.plazafyi.models.GeoJsonGeometry
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -18,12 +17,7 @@ internal class RoutingIsochroneResponseTest {
             RoutingIsochroneResponse.builder()
                 .addFeature(
                     GeoJsonFeature.builder()
-                        .geometry(
-                            GeoJsonGeometry.builder()
-                                .coordinatesOfPoint(listOf(2.3522, 48.8566))
-                                .type(GeoJsonGeometry.Type.POINT)
-                                .build()
-                        )
+                        .pointGeometry(listOf(2.3522, 48.8566))
                         .properties(
                             GeoJsonFeature.Properties.builder()
                                 .putAdditionalProperty("@id", JsonValue.from("bar"))
@@ -37,33 +31,13 @@ internal class RoutingIsochroneResponseTest {
                         .id("node/21154906")
                         .build()
                 )
-                .geometry(
-                    GeoJsonGeometry.builder()
-                        .coordinatesOfPoint(listOf(2.3522, 48.8566))
-                        .type(GeoJsonGeometry.Type.POINT)
-                        .build()
-                )
-                .properties(
-                    RoutingIsochroneResponse.Properties.builder()
-                        .areaM2(0.0)
-                        .maxCostS(0.0)
-                        .mode(RoutingIsochroneResponse.Properties.Mode.AUTO)
-                        .timeSeconds(0.0)
-                        .verticesReached(0L)
-                        .build()
-                )
-                .type(RoutingIsochroneResponse.Type.FEATURE)
+                .type(RoutingIsochroneResponse.Type.FEATURE_COLLECTION)
                 .build()
 
         assertThat(routingIsochroneResponse.features())
             .containsExactly(
                 GeoJsonFeature.builder()
-                    .geometry(
-                        GeoJsonGeometry.builder()
-                            .coordinatesOfPoint(listOf(2.3522, 48.8566))
-                            .type(GeoJsonGeometry.Type.POINT)
-                            .build()
-                    )
+                    .pointGeometry(listOf(2.3522, 48.8566))
                     .properties(
                         GeoJsonFeature.Properties.builder()
                             .putAdditionalProperty("@id", JsonValue.from("bar"))
@@ -77,24 +51,8 @@ internal class RoutingIsochroneResponseTest {
                     .id("node/21154906")
                     .build()
             )
-        assertThat(routingIsochroneResponse.geometry())
-            .isEqualTo(
-                GeoJsonGeometry.builder()
-                    .coordinatesOfPoint(listOf(2.3522, 48.8566))
-                    .type(GeoJsonGeometry.Type.POINT)
-                    .build()
-            )
-        assertThat(routingIsochroneResponse.properties())
-            .isEqualTo(
-                RoutingIsochroneResponse.Properties.builder()
-                    .areaM2(0.0)
-                    .maxCostS(0.0)
-                    .mode(RoutingIsochroneResponse.Properties.Mode.AUTO)
-                    .timeSeconds(0.0)
-                    .verticesReached(0L)
-                    .build()
-            )
-        assertThat(routingIsochroneResponse.type()).isEqualTo(RoutingIsochroneResponse.Type.FEATURE)
+        assertThat(routingIsochroneResponse.type())
+            .isEqualTo(RoutingIsochroneResponse.Type.FEATURE_COLLECTION)
     }
 
     @Test
@@ -104,12 +62,7 @@ internal class RoutingIsochroneResponseTest {
             RoutingIsochroneResponse.builder()
                 .addFeature(
                     GeoJsonFeature.builder()
-                        .geometry(
-                            GeoJsonGeometry.builder()
-                                .coordinatesOfPoint(listOf(2.3522, 48.8566))
-                                .type(GeoJsonGeometry.Type.POINT)
-                                .build()
-                        )
+                        .pointGeometry(listOf(2.3522, 48.8566))
                         .properties(
                             GeoJsonFeature.Properties.builder()
                                 .putAdditionalProperty("@id", JsonValue.from("bar"))
@@ -123,22 +76,7 @@ internal class RoutingIsochroneResponseTest {
                         .id("node/21154906")
                         .build()
                 )
-                .geometry(
-                    GeoJsonGeometry.builder()
-                        .coordinatesOfPoint(listOf(2.3522, 48.8566))
-                        .type(GeoJsonGeometry.Type.POINT)
-                        .build()
-                )
-                .properties(
-                    RoutingIsochroneResponse.Properties.builder()
-                        .areaM2(0.0)
-                        .maxCostS(0.0)
-                        .mode(RoutingIsochroneResponse.Properties.Mode.AUTO)
-                        .timeSeconds(0.0)
-                        .verticesReached(0L)
-                        .build()
-                )
-                .type(RoutingIsochroneResponse.Type.FEATURE)
+                .type(RoutingIsochroneResponse.Type.FEATURE_COLLECTION)
                 .build()
 
         val roundtrippedRoutingIsochroneResponse =

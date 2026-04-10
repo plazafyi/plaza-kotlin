@@ -2,10 +2,12 @@
 
 package com.plazafyi.models.search
 
+import com.plazafyi.core.JsonValue
 import com.plazafyi.core.Params
 import com.plazafyi.core.checkRequired
 import com.plazafyi.core.http.Headers
 import com.plazafyi.core.http.QueryParams
+import com.plazafyi.core.toImmutable
 import java.util.Objects
 
 /** Search OSM features by name */
@@ -21,6 +23,7 @@ private constructor(
     private val outputSort: String?,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
+    private val additionalBodyProperties: Map<String, JsonValue>,
 ) : Params {
 
     /** Search query string */
@@ -46,6 +49,9 @@ private constructor(
 
     /** Sort by: distance, name, osm_id */
     fun outputSort(): String? = outputSort
+
+    /** Additional body properties to send with the request. */
+    fun _additionalBodyProperties(): Map<String, JsonValue> = additionalBodyProperties
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -81,6 +87,7 @@ private constructor(
         private var outputSort: String? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
+        private var additionalBodyProperties: MutableMap<String, JsonValue> = mutableMapOf()
 
         internal fun from(searchQueryParams: SearchQueryParams) = apply {
             q = searchQueryParams.q
@@ -93,6 +100,7 @@ private constructor(
             outputSort = searchQueryParams.outputSort
             additionalHeaders = searchQueryParams.additionalHeaders.toBuilder()
             additionalQueryParams = searchQueryParams.additionalQueryParams.toBuilder()
+            additionalBodyProperties = searchQueryParams.additionalBodyProperties.toMutableMap()
         }
 
         /** Search query string */
@@ -233,6 +241,28 @@ private constructor(
             additionalQueryParams.removeAll(keys)
         }
 
+        fun additionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) = apply {
+            this.additionalBodyProperties.clear()
+            putAllAdditionalBodyProperties(additionalBodyProperties)
+        }
+
+        fun putAdditionalBodyProperty(key: String, value: JsonValue) = apply {
+            additionalBodyProperties.put(key, value)
+        }
+
+        fun putAllAdditionalBodyProperties(additionalBodyProperties: Map<String, JsonValue>) =
+            apply {
+                this.additionalBodyProperties.putAll(additionalBodyProperties)
+            }
+
+        fun removeAdditionalBodyProperty(key: String) = apply {
+            additionalBodyProperties.remove(key)
+        }
+
+        fun removeAllAdditionalBodyProperties(keys: Set<String>) = apply {
+            keys.forEach(::removeAdditionalBodyProperty)
+        }
+
         /**
          * Returns an immutable instance of [SearchQueryParams].
          *
@@ -257,8 +287,11 @@ private constructor(
                 outputSort,
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
+                additionalBodyProperties.toImmutable(),
             )
     }
+
+    fun _body(): Map<String, JsonValue>? = additionalBodyProperties.ifEmpty { null }
 
     override fun _headers(): Headers = additionalHeaders
 
@@ -292,7 +325,8 @@ private constructor(
             outputPrecision == other.outputPrecision &&
             outputSort == other.outputSort &&
             additionalHeaders == other.additionalHeaders &&
-            additionalQueryParams == other.additionalQueryParams
+            additionalQueryParams == other.additionalQueryParams &&
+            additionalBodyProperties == other.additionalBodyProperties
     }
 
     override fun hashCode(): Int =
@@ -307,8 +341,9 @@ private constructor(
             outputSort,
             additionalHeaders,
             additionalQueryParams,
+            additionalBodyProperties,
         )
 
     override fun toString() =
-        "SearchQueryParams{q=$q, cursor=$cursor, format=$format, limit=$limit, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSort=$outputSort, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "SearchQueryParams{q=$q, cursor=$cursor, format=$format, limit=$limit, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, outputSort=$outputSort, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams, additionalBodyProperties=$additionalBodyProperties}"
 }

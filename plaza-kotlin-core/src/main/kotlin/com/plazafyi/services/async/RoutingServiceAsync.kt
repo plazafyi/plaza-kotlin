@@ -6,18 +6,17 @@ import com.google.errorprone.annotations.MustBeClosed
 import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
+import com.plazafyi.models.routing.IsochroneRequest
 import com.plazafyi.models.routing.MatrixRequest
 import com.plazafyi.models.routing.MatrixResult
+import com.plazafyi.models.routing.NearestRequest
 import com.plazafyi.models.routing.NearestResult
 import com.plazafyi.models.routing.RouteRequest
 import com.plazafyi.models.routing.RouteResult
 import com.plazafyi.models.routing.RoutingIsochroneParams
-import com.plazafyi.models.routing.RoutingIsochronePostParams
-import com.plazafyi.models.routing.RoutingIsochronePostResponse
 import com.plazafyi.models.routing.RoutingIsochroneResponse
 import com.plazafyi.models.routing.RoutingMatrixParams
 import com.plazafyi.models.routing.RoutingNearestParams
-import com.plazafyi.models.routing.RoutingNearestPostParams
 import com.plazafyi.models.routing.RoutingRouteParams
 
 interface RoutingServiceAsync {
@@ -40,11 +39,15 @@ interface RoutingServiceAsync {
         requestOptions: RequestOptions = RequestOptions.none(),
     ): RoutingIsochroneResponse
 
-    /** Calculate an isochrone from a point */
-    suspend fun isochronePost(
-        params: RoutingIsochronePostParams,
+    /** @see isochrone */
+    suspend fun isochrone(
+        isochroneRequest: IsochroneRequest,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): RoutingIsochronePostResponse
+    ): RoutingIsochroneResponse =
+        isochrone(
+            RoutingIsochroneParams.builder().isochroneRequest(isochroneRequest).build(),
+            requestOptions,
+        )
 
     /** Calculate a distance matrix between points */
     suspend fun matrix(
@@ -65,11 +68,15 @@ interface RoutingServiceAsync {
         requestOptions: RequestOptions = RequestOptions.none(),
     ): NearestResult
 
-    /** Snap a coordinate to the nearest road */
-    suspend fun nearestPost(
-        params: RoutingNearestPostParams,
+    /** @see nearest */
+    suspend fun nearest(
+        nearestRequest: NearestRequest,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): NearestResult
+    ): NearestResult =
+        nearest(
+            RoutingNearestParams.builder().nearestRequest(nearestRequest).build(),
+            requestOptions,
+        )
 
     /** Calculate a route between two points */
     suspend fun route(
@@ -99,7 +106,7 @@ interface RoutingServiceAsync {
         ): RoutingServiceAsync.WithRawResponse
 
         /**
-         * Returns a raw HTTP response for `get /api/v1/isochrone`, but is otherwise the same as
+         * Returns a raw HTTP response for `post /api/v1/isochrone`, but is otherwise the same as
          * [RoutingServiceAsync.isochrone].
          */
         @MustBeClosed
@@ -108,15 +115,16 @@ interface RoutingServiceAsync {
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<RoutingIsochroneResponse>
 
-        /**
-         * Returns a raw HTTP response for `post /api/v1/isochrone`, but is otherwise the same as
-         * [RoutingServiceAsync.isochronePost].
-         */
+        /** @see isochrone */
         @MustBeClosed
-        suspend fun isochronePost(
-            params: RoutingIsochronePostParams,
+        suspend fun isochrone(
+            isochroneRequest: IsochroneRequest,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<RoutingIsochronePostResponse>
+        ): HttpResponseFor<RoutingIsochroneResponse> =
+            isochrone(
+                RoutingIsochroneParams.builder().isochroneRequest(isochroneRequest).build(),
+                requestOptions,
+            )
 
         /**
          * Returns a raw HTTP response for `post /api/v1/matrix`, but is otherwise the same as
@@ -140,7 +148,7 @@ interface RoutingServiceAsync {
             )
 
         /**
-         * Returns a raw HTTP response for `get /api/v1/nearest`, but is otherwise the same as
+         * Returns a raw HTTP response for `post /api/v1/nearest`, but is otherwise the same as
          * [RoutingServiceAsync.nearest].
          */
         @MustBeClosed
@@ -149,15 +157,16 @@ interface RoutingServiceAsync {
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<NearestResult>
 
-        /**
-         * Returns a raw HTTP response for `post /api/v1/nearest`, but is otherwise the same as
-         * [RoutingServiceAsync.nearestPost].
-         */
+        /** @see nearest */
         @MustBeClosed
-        suspend fun nearestPost(
-            params: RoutingNearestPostParams,
+        suspend fun nearest(
+            nearestRequest: NearestRequest,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<NearestResult>
+        ): HttpResponseFor<NearestResult> =
+            nearest(
+                RoutingNearestParams.builder().nearestRequest(nearestRequest).build(),
+                requestOptions,
+            )
 
         /**
          * Returns a raw HTTP response for `post /api/v1/route`, but is otherwise the same as

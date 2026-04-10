@@ -2,6 +2,7 @@
 
 package com.plazafyi.models.routing
 
+import com.plazafyi.core.JsonValue
 import com.plazafyi.core.Params
 import com.plazafyi.core.checkRequired
 import com.plazafyi.core.http.Headers
@@ -11,33 +12,15 @@ import java.util.Objects
 /** Snap a coordinate to the nearest road */
 class RoutingNearestParams
 private constructor(
-    private val lat: Double,
-    private val lng: Double,
-    private val outputFields: String?,
-    private val outputInclude: String?,
-    private val outputPrecision: Long?,
-    private val radius: Long?,
+    private val nearestRequest: NearestRequest,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
 
-    /** Latitude */
-    fun lat(): Double = lat
+    /** Request body for nearest-road-segment lookup. Snaps a point to the road network. */
+    fun nearestRequest(): NearestRequest = nearestRequest
 
-    /** Longitude */
-    fun lng(): Double = lng
-
-    /** Comma-separated property fields to include */
-    fun outputFields(): String? = outputFields
-
-    /** Extra computed fields: bbox, distance, center */
-    fun outputInclude(): String? = outputInclude
-
-    /** Coordinate decimal precision (1-15, default 7) */
-    fun outputPrecision(): Long? = outputPrecision
-
-    /** Search radius in meters (default 500, max 5000) */
-    fun radius(): Long? = radius
+    fun _additionalBodyProperties(): Map<String, JsonValue> = nearestRequest._additionalProperties()
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -54,8 +37,7 @@ private constructor(
          *
          * The following fields are required:
          * ```kotlin
-         * .lat()
-         * .lng()
+         * .nearestRequest()
          * ```
          */
         fun builder() = Builder()
@@ -64,59 +46,20 @@ private constructor(
     /** A builder for [RoutingNearestParams]. */
     class Builder internal constructor() {
 
-        private var lat: Double? = null
-        private var lng: Double? = null
-        private var outputFields: String? = null
-        private var outputInclude: String? = null
-        private var outputPrecision: Long? = null
-        private var radius: Long? = null
+        private var nearestRequest: NearestRequest? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(routingNearestParams: RoutingNearestParams) = apply {
-            lat = routingNearestParams.lat
-            lng = routingNearestParams.lng
-            outputFields = routingNearestParams.outputFields
-            outputInclude = routingNearestParams.outputInclude
-            outputPrecision = routingNearestParams.outputPrecision
-            radius = routingNearestParams.radius
+            nearestRequest = routingNearestParams.nearestRequest
             additionalHeaders = routingNearestParams.additionalHeaders.toBuilder()
             additionalQueryParams = routingNearestParams.additionalQueryParams.toBuilder()
         }
 
-        /** Latitude */
-        fun lat(lat: Double) = apply { this.lat = lat }
-
-        /** Longitude */
-        fun lng(lng: Double) = apply { this.lng = lng }
-
-        /** Comma-separated property fields to include */
-        fun outputFields(outputFields: String?) = apply { this.outputFields = outputFields }
-
-        /** Extra computed fields: bbox, distance, center */
-        fun outputInclude(outputInclude: String?) = apply { this.outputInclude = outputInclude }
-
-        /** Coordinate decimal precision (1-15, default 7) */
-        fun outputPrecision(outputPrecision: Long?) = apply {
-            this.outputPrecision = outputPrecision
+        /** Request body for nearest-road-segment lookup. Snaps a point to the road network. */
+        fun nearestRequest(nearestRequest: NearestRequest) = apply {
+            this.nearestRequest = nearestRequest
         }
-
-        /**
-         * Alias for [Builder.outputPrecision].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun outputPrecision(outputPrecision: Long) = outputPrecision(outputPrecision as Long?)
-
-        /** Search radius in meters (default 500, max 5000) */
-        fun radius(radius: Long?) = apply { this.radius = radius }
-
-        /**
-         * Alias for [Builder.radius].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun radius(radius: Long) = radius(radius as Long?)
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -223,39 +166,24 @@ private constructor(
          *
          * The following fields are required:
          * ```kotlin
-         * .lat()
-         * .lng()
+         * .nearestRequest()
          * ```
          *
          * @throws IllegalStateException if any required field is unset.
          */
         fun build(): RoutingNearestParams =
             RoutingNearestParams(
-                checkRequired("lat", lat),
-                checkRequired("lng", lng),
-                outputFields,
-                outputInclude,
-                outputPrecision,
-                radius,
+                checkRequired("nearestRequest", nearestRequest),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
             )
     }
 
+    fun _body(): NearestRequest = nearestRequest
+
     override fun _headers(): Headers = additionalHeaders
 
-    override fun _queryParams(): QueryParams =
-        QueryParams.builder()
-            .apply {
-                put("lat", lat.toString())
-                put("lng", lng.toString())
-                outputFields?.let { put("output[fields]", it) }
-                outputInclude?.let { put("output[include]", it) }
-                outputPrecision?.let { put("output[precision]", it.toString()) }
-                radius?.let { put("radius", it.toString()) }
-                putAll(additionalQueryParams)
-            }
-            .build()
+    override fun _queryParams(): QueryParams = additionalQueryParams
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {
@@ -263,28 +191,14 @@ private constructor(
         }
 
         return other is RoutingNearestParams &&
-            lat == other.lat &&
-            lng == other.lng &&
-            outputFields == other.outputFields &&
-            outputInclude == other.outputInclude &&
-            outputPrecision == other.outputPrecision &&
-            radius == other.radius &&
+            nearestRequest == other.nearestRequest &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(
-            lat,
-            lng,
-            outputFields,
-            outputInclude,
-            outputPrecision,
-            radius,
-            additionalHeaders,
-            additionalQueryParams,
-        )
+        Objects.hash(nearestRequest, additionalHeaders, additionalQueryParams)
 
     override fun toString() =
-        "RoutingNearestParams{lat=$lat, lng=$lng, outputFields=$outputFields, outputInclude=$outputInclude, outputPrecision=$outputPrecision, radius=$radius, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "RoutingNearestParams{nearestRequest=$nearestRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

@@ -22,7 +22,7 @@ private constructor(
     fun format(): String? = format
 
     /**
-     * Request body for route calculation. Origin and destination are lat/lng coordinate objects.
+     * Request body for route calculation. Origin and destination are GeoJSON Point geometries.
      * Supports optional waypoints, alternative routes, turn-by-turn steps, and EV routing
      * parameters.
      */
@@ -70,9 +70,9 @@ private constructor(
         fun format(format: String?) = apply { this.format = format }
 
         /**
-         * Request body for route calculation. Origin and destination are lat/lng coordinate
-         * objects. Supports optional waypoints, alternative routes, turn-by-turn steps, and EV
-         * routing parameters.
+         * Request body for route calculation. Origin and destination are GeoJSON Point geometries.
+         * Supports optional waypoints, alternative routes, turn-by-turn steps, and EV routing
+         * parameters.
          */
         fun routeRequest(routeRequest: RouteRequest) = apply { this.routeRequest = routeRequest }
 
