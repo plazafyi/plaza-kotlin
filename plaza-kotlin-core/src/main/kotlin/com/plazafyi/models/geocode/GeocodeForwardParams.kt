@@ -2,6 +2,7 @@
 
 package com.plazafyi.models.geocode
 
+import com.plazafyi.core.JsonValue
 import com.plazafyi.core.Params
 import com.plazafyi.core.checkRequired
 import com.plazafyi.core.http.Headers
@@ -11,45 +12,20 @@ import java.util.Objects
 /** Forward geocode an address */
 class GeocodeForwardParams
 private constructor(
-    private val q: String,
-    private val bbox: String?,
-    private val countryCode: String?,
     private val format: String?,
-    private val lang: String?,
-    private val lat: Double?,
-    private val layer: String?,
-    private val limit: Long?,
-    private val lng: Double?,
+    private val geocodeForwardRequest: GeocodeForwardRequest,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
 
-    /** Address or place name */
-    fun q(): String = q
-
-    /** Bounding box filter: south,west,north,east */
-    fun bbox(): String? = bbox
-
-    /** ISO 3166-1 alpha-2 country code filter */
-    fun countryCode(): String? = countryCode
-
     /** Response format: json (default), geojson, csv, ndjson */
     fun format(): String? = format
 
-    /** Language code for localized names (e.g. en, de, fr) */
-    fun lang(): String? = lang
+    /** Request body for forward geocoding. Converts an address or place name to coordinates. */
+    fun geocodeForwardRequest(): GeocodeForwardRequest = geocodeForwardRequest
 
-    /** Focus latitude */
-    fun lat(): Double? = lat
-
-    /** Filter by layer: address, poi, or admin */
-    fun layer(): String? = layer
-
-    /** Maximum results (default 20, max 100) */
-    fun limit(): Long? = limit
-
-    /** Focus longitude */
-    fun lng(): Double? = lng
+    fun _additionalBodyProperties(): Map<String, JsonValue> =
+        geocodeForwardRequest._additionalProperties()
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -66,7 +42,7 @@ private constructor(
          *
          * The following fields are required:
          * ```kotlin
-         * .q()
+         * .geocodeForwardRequest()
          * ```
          */
         fun builder() = Builder()
@@ -75,79 +51,25 @@ private constructor(
     /** A builder for [GeocodeForwardParams]. */
     class Builder internal constructor() {
 
-        private var q: String? = null
-        private var bbox: String? = null
-        private var countryCode: String? = null
         private var format: String? = null
-        private var lang: String? = null
-        private var lat: Double? = null
-        private var layer: String? = null
-        private var limit: Long? = null
-        private var lng: Double? = null
+        private var geocodeForwardRequest: GeocodeForwardRequest? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(geocodeForwardParams: GeocodeForwardParams) = apply {
-            q = geocodeForwardParams.q
-            bbox = geocodeForwardParams.bbox
-            countryCode = geocodeForwardParams.countryCode
             format = geocodeForwardParams.format
-            lang = geocodeForwardParams.lang
-            lat = geocodeForwardParams.lat
-            layer = geocodeForwardParams.layer
-            limit = geocodeForwardParams.limit
-            lng = geocodeForwardParams.lng
+            geocodeForwardRequest = geocodeForwardParams.geocodeForwardRequest
             additionalHeaders = geocodeForwardParams.additionalHeaders.toBuilder()
             additionalQueryParams = geocodeForwardParams.additionalQueryParams.toBuilder()
         }
 
-        /** Address or place name */
-        fun q(q: String) = apply { this.q = q }
-
-        /** Bounding box filter: south,west,north,east */
-        fun bbox(bbox: String?) = apply { this.bbox = bbox }
-
-        /** ISO 3166-1 alpha-2 country code filter */
-        fun countryCode(countryCode: String?) = apply { this.countryCode = countryCode }
-
         /** Response format: json (default), geojson, csv, ndjson */
         fun format(format: String?) = apply { this.format = format }
 
-        /** Language code for localized names (e.g. en, de, fr) */
-        fun lang(lang: String?) = apply { this.lang = lang }
-
-        /** Focus latitude */
-        fun lat(lat: Double?) = apply { this.lat = lat }
-
-        /**
-         * Alias for [Builder.lat].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun lat(lat: Double) = lat(lat as Double?)
-
-        /** Filter by layer: address, poi, or admin */
-        fun layer(layer: String?) = apply { this.layer = layer }
-
-        /** Maximum results (default 20, max 100) */
-        fun limit(limit: Long?) = apply { this.limit = limit }
-
-        /**
-         * Alias for [Builder.limit].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun limit(limit: Long) = limit(limit as Long?)
-
-        /** Focus longitude */
-        fun lng(lng: Double?) = apply { this.lng = lng }
-
-        /**
-         * Alias for [Builder.lng].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun lng(lng: Double) = lng(lng as Double?)
+        /** Request body for forward geocoding. Converts an address or place name to coordinates. */
+        fun geocodeForwardRequest(geocodeForwardRequest: GeocodeForwardRequest) = apply {
+            this.geocodeForwardRequest = geocodeForwardRequest
+        }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -254,41 +176,28 @@ private constructor(
          *
          * The following fields are required:
          * ```kotlin
-         * .q()
+         * .geocodeForwardRequest()
          * ```
          *
          * @throws IllegalStateException if any required field is unset.
          */
         fun build(): GeocodeForwardParams =
             GeocodeForwardParams(
-                checkRequired("q", q),
-                bbox,
-                countryCode,
                 format,
-                lang,
-                lat,
-                layer,
-                limit,
-                lng,
+                checkRequired("geocodeForwardRequest", geocodeForwardRequest),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
             )
     }
+
+    fun _body(): GeocodeForwardRequest = geocodeForwardRequest
 
     override fun _headers(): Headers = additionalHeaders
 
     override fun _queryParams(): QueryParams =
         QueryParams.builder()
             .apply {
-                put("q", q)
-                bbox?.let { put("bbox", it) }
-                countryCode?.let { put("country_code", it) }
                 format?.let { put("format", it) }
-                lang?.let { put("lang", it) }
-                lat?.let { put("lat", it.toString()) }
-                layer?.let { put("layer", it) }
-                limit?.let { put("limit", it.toString()) }
-                lng?.let { put("lng", it.toString()) }
                 putAll(additionalQueryParams)
             }
             .build()
@@ -299,34 +208,15 @@ private constructor(
         }
 
         return other is GeocodeForwardParams &&
-            q == other.q &&
-            bbox == other.bbox &&
-            countryCode == other.countryCode &&
             format == other.format &&
-            lang == other.lang &&
-            lat == other.lat &&
-            layer == other.layer &&
-            limit == other.limit &&
-            lng == other.lng &&
+            geocodeForwardRequest == other.geocodeForwardRequest &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(
-            q,
-            bbox,
-            countryCode,
-            format,
-            lang,
-            lat,
-            layer,
-            limit,
-            lng,
-            additionalHeaders,
-            additionalQueryParams,
-        )
+        Objects.hash(format, geocodeForwardRequest, additionalHeaders, additionalQueryParams)
 
     override fun toString() =
-        "GeocodeForwardParams{q=$q, bbox=$bbox, countryCode=$countryCode, format=$format, lang=$lang, lat=$lat, layer=$layer, limit=$limit, lng=$lng, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "GeocodeForwardParams{format=$format, geocodeForwardRequest=$geocodeForwardRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

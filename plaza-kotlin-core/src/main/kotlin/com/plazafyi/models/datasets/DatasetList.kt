@@ -17,7 +17,7 @@ import com.plazafyi.errors.PlazaInvalidDataException
 import java.util.Collections
 import java.util.Objects
 
-/** List of all available datasets. */
+/** List of datasets visible to the authenticated user. */
 class DatasetList
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(

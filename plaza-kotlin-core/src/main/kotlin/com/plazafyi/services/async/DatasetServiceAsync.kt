@@ -7,11 +7,9 @@ import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponse
 import com.plazafyi.core.http.HttpResponseFor
-import com.plazafyi.models.FeatureCollection
 import com.plazafyi.models.datasets.Dataset
 import com.plazafyi.models.datasets.DatasetCreateParams
 import com.plazafyi.models.datasets.DatasetDeleteParams
-import com.plazafyi.models.datasets.DatasetFeaturesParams
 import com.plazafyi.models.datasets.DatasetList
 import com.plazafyi.models.datasets.DatasetListParams
 import com.plazafyi.models.datasets.DatasetRetrieveParams
@@ -30,7 +28,7 @@ interface DatasetServiceAsync {
      */
     fun withOptions(modifier: (ClientOptions.Builder) -> Unit): DatasetServiceAsync
 
-    /** Create a new dataset (admin only) */
+    /** Create a new dataset */
     suspend fun create(
         params: DatasetCreateParams,
         requestOptions: RequestOptions = RequestOptions.none(),
@@ -53,7 +51,7 @@ interface DatasetServiceAsync {
     suspend fun retrieve(id: String, requestOptions: RequestOptions): Dataset =
         retrieve(id, DatasetRetrieveParams.none(), requestOptions)
 
-    /** List all datasets */
+    /** List datasets */
     suspend fun list(
         params: DatasetListParams = DatasetListParams.none(),
         requestOptions: RequestOptions = RequestOptions.none(),
@@ -79,23 +77,6 @@ interface DatasetServiceAsync {
     /** @see delete */
     suspend fun delete(id: String, requestOptions: RequestOptions) =
         delete(id, DatasetDeleteParams.none(), requestOptions)
-
-    /** Query features in a dataset */
-    suspend fun features(
-        id: String,
-        params: DatasetFeaturesParams = DatasetFeaturesParams.none(),
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): FeatureCollection = features(params.toBuilder().id(id).build(), requestOptions)
-
-    /** @see features */
-    suspend fun features(
-        params: DatasetFeaturesParams,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): FeatureCollection
-
-    /** @see features */
-    suspend fun features(id: String, requestOptions: RequestOptions): FeatureCollection =
-        features(id, DatasetFeaturesParams.none(), requestOptions)
 
     /**
      * A view of [DatasetServiceAsync] that provides access to raw HTTP responses for each method.
@@ -181,32 +162,5 @@ interface DatasetServiceAsync {
         @MustBeClosed
         suspend fun delete(id: String, requestOptions: RequestOptions): HttpResponse =
             delete(id, DatasetDeleteParams.none(), requestOptions)
-
-        /**
-         * Returns a raw HTTP response for `get /api/v1/datasets/{id}/features`, but is otherwise
-         * the same as [DatasetServiceAsync.features].
-         */
-        @MustBeClosed
-        suspend fun features(
-            id: String,
-            params: DatasetFeaturesParams = DatasetFeaturesParams.none(),
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<FeatureCollection> =
-            features(params.toBuilder().id(id).build(), requestOptions)
-
-        /** @see features */
-        @MustBeClosed
-        suspend fun features(
-            params: DatasetFeaturesParams,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<FeatureCollection>
-
-        /** @see features */
-        @MustBeClosed
-        suspend fun features(
-            id: String,
-            requestOptions: RequestOptions,
-        ): HttpResponseFor<FeatureCollection> =
-            features(id, DatasetFeaturesParams.none(), requestOptions)
     }
 }
