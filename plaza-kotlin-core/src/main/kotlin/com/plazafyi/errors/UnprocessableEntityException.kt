@@ -5,10 +5,14 @@ package com.plazafyi.errors
 import com.plazafyi.core.JsonValue
 import com.plazafyi.core.checkRequired
 import com.plazafyi.core.http.Headers
+import com.plazafyi.core.jsonMapper
 
 class UnprocessableEntityException
 private constructor(private val headers: Headers, private val body: JsonValue, cause: Throwable?) :
-    PlazaServiceException("422: $body", cause) {
+    PlazaServiceException(
+        "422: ${if (body.isMissing()) "Unknown" else jsonMapper().writeValueAsString(body)}",
+        cause,
+    ) {
 
     override fun statusCode(): Int = 422
 
