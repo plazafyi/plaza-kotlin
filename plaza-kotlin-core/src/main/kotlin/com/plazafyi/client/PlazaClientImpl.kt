@@ -6,10 +6,10 @@ import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.getPackageVersion
 import com.plazafyi.services.blocking.DatasetService
 import com.plazafyi.services.blocking.DatasetServiceImpl
-import com.plazafyi.services.blocking.ElementService
-import com.plazafyi.services.blocking.ElementServiceImpl
 import com.plazafyi.services.blocking.ElevationService
 import com.plazafyi.services.blocking.ElevationServiceImpl
+import com.plazafyi.services.blocking.FeatureService
+import com.plazafyi.services.blocking.FeatureServiceImpl
 import com.plazafyi.services.blocking.GeocodeService
 import com.plazafyi.services.blocking.GeocodeServiceImpl
 import com.plazafyi.services.blocking.MapMatchService
@@ -42,7 +42,7 @@ class PlazaClientImpl(private val clientOptions: ClientOptions) : PlazaClient {
         WithRawResponseImpl(clientOptions)
     }
 
-    private val elements: ElementService by lazy { ElementServiceImpl(clientOptionsWithUserAgent) }
+    private val features: FeatureService by lazy { FeatureServiceImpl(clientOptionsWithUserAgent) }
 
     private val datasets: DatasetService by lazy { DatasetServiceImpl(clientOptionsWithUserAgent) }
 
@@ -75,7 +75,7 @@ class PlazaClientImpl(private val clientOptions: ClientOptions) : PlazaClient {
     override fun withOptions(modifier: (ClientOptions.Builder) -> Unit): PlazaClient =
         PlazaClientImpl(clientOptions.toBuilder().apply(modifier).build())
 
-    override fun elements(): ElementService = elements
+    override fun features(): FeatureService = features
 
     override fun datasets(): DatasetService = datasets
 
@@ -100,8 +100,8 @@ class PlazaClientImpl(private val clientOptions: ClientOptions) : PlazaClient {
     class WithRawResponseImpl internal constructor(private val clientOptions: ClientOptions) :
         PlazaClient.WithRawResponse {
 
-        private val elements: ElementService.WithRawResponse by lazy {
-            ElementServiceImpl.WithRawResponseImpl(clientOptions)
+        private val features: FeatureService.WithRawResponse by lazy {
+            FeatureServiceImpl.WithRawResponseImpl(clientOptions)
         }
 
         private val datasets: DatasetService.WithRawResponse by lazy {
@@ -145,7 +145,7 @@ class PlazaClientImpl(private val clientOptions: ClientOptions) : PlazaClient {
         ): PlazaClient.WithRawResponse =
             PlazaClientImpl.WithRawResponseImpl(clientOptions.toBuilder().apply(modifier).build())
 
-        override fun elements(): ElementService.WithRawResponse = elements
+        override fun features(): FeatureService.WithRawResponse = features
 
         override fun datasets(): DatasetService.WithRawResponse = datasets
 

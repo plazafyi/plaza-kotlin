@@ -19,12 +19,9 @@ import com.plazafyi.models.routing.MatrixResult
 import com.plazafyi.models.routing.NearestResult
 import com.plazafyi.models.routing.RouteResult
 import com.plazafyi.models.routing.RoutingIsochroneParams
-import com.plazafyi.models.routing.RoutingIsochronePostParams
-import com.plazafyi.models.routing.RoutingIsochronePostResponse
 import com.plazafyi.models.routing.RoutingIsochroneResponse
 import com.plazafyi.models.routing.RoutingMatrixParams
 import com.plazafyi.models.routing.RoutingNearestParams
-import com.plazafyi.models.routing.RoutingNearestPostParams
 import com.plazafyi.models.routing.RoutingRouteParams
 
 class RoutingServiceAsyncImpl internal constructor(private val clientOptions: ClientOptions) :
@@ -43,15 +40,8 @@ class RoutingServiceAsyncImpl internal constructor(private val clientOptions: Cl
         params: RoutingIsochroneParams,
         requestOptions: RequestOptions,
     ): RoutingIsochroneResponse =
-        // get /api/v1/isochrone
-        withRawResponse().isochrone(params, requestOptions).parse()
-
-    override suspend fun isochronePost(
-        params: RoutingIsochronePostParams,
-        requestOptions: RequestOptions,
-    ): RoutingIsochronePostResponse =
         // post /api/v1/isochrone
-        withRawResponse().isochronePost(params, requestOptions).parse()
+        withRawResponse().isochrone(params, requestOptions).parse()
 
     override suspend fun matrix(
         params: RoutingMatrixParams,
@@ -64,15 +54,8 @@ class RoutingServiceAsyncImpl internal constructor(private val clientOptions: Cl
         params: RoutingNearestParams,
         requestOptions: RequestOptions,
     ): NearestResult =
-        // get /api/v1/nearest
-        withRawResponse().nearest(params, requestOptions).parse()
-
-    override suspend fun nearestPost(
-        params: RoutingNearestPostParams,
-        requestOptions: RequestOptions,
-    ): NearestResult =
         // post /api/v1/nearest
-        withRawResponse().nearestPost(params, requestOptions).parse()
+        withRawResponse().nearest(params, requestOptions).parse()
 
     override suspend fun route(
         params: RoutingRouteParams,
@@ -103,9 +86,10 @@ class RoutingServiceAsyncImpl internal constructor(private val clientOptions: Cl
         ): HttpResponseFor<RoutingIsochroneResponse> {
             val request =
                 HttpRequest.builder()
-                    .method(HttpMethod.GET)
+                    .method(HttpMethod.POST)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "isochrone")
+                    .body(json(clientOptions.jsonMapper, params._body()))
                     .build()
                     .prepareAsync(clientOptions, params)
             val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
@@ -113,34 +97,6 @@ class RoutingServiceAsyncImpl internal constructor(private val clientOptions: Cl
             return errorHandler.handle(response).parseable {
                 response
                     .use { isochroneHandler.handle(it) }
-                    .also {
-                        if (requestOptions.responseValidation!!) {
-                            it.validate()
-                        }
-                    }
-            }
-        }
-
-        private val isochronePostHandler: Handler<RoutingIsochronePostResponse> =
-            jsonHandler<RoutingIsochronePostResponse>(clientOptions.jsonMapper)
-
-        override suspend fun isochronePost(
-            params: RoutingIsochronePostParams,
-            requestOptions: RequestOptions,
-        ): HttpResponseFor<RoutingIsochronePostResponse> {
-            val request =
-                HttpRequest.builder()
-                    .method(HttpMethod.POST)
-                    .baseUrl(clientOptions.baseUrl())
-                    .addPathSegments("api", "v1", "isochrone")
-                    .apply { params._body()?.let { body(json(clientOptions.jsonMapper, it)) } }
-                    .build()
-                    .prepareAsync(clientOptions, params)
-            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
-            val response = clientOptions.httpClient.executeAsync(request, requestOptions)
-            return errorHandler.handle(response).parseable {
-                response
-                    .use { isochronePostHandler.handle(it) }
                     .also {
                         if (requestOptions.responseValidation!!) {
                             it.validate()
@@ -186,9 +142,10 @@ class RoutingServiceAsyncImpl internal constructor(private val clientOptions: Cl
         ): HttpResponseFor<NearestResult> {
             val request =
                 HttpRequest.builder()
-                    .method(HttpMethod.GET)
+                    .method(HttpMethod.POST)
                     .baseUrl(clientOptions.baseUrl())
                     .addPathSegments("api", "v1", "nearest")
+                    .body(json(clientOptions.jsonMapper, params._body()))
                     .build()
                     .prepareAsync(clientOptions, params)
             val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
@@ -196,34 +153,6 @@ class RoutingServiceAsyncImpl internal constructor(private val clientOptions: Cl
             return errorHandler.handle(response).parseable {
                 response
                     .use { nearestHandler.handle(it) }
-                    .also {
-                        if (requestOptions.responseValidation!!) {
-                            it.validate()
-                        }
-                    }
-            }
-        }
-
-        private val nearestPostHandler: Handler<NearestResult> =
-            jsonHandler<NearestResult>(clientOptions.jsonMapper)
-
-        override suspend fun nearestPost(
-            params: RoutingNearestPostParams,
-            requestOptions: RequestOptions,
-        ): HttpResponseFor<NearestResult> {
-            val request =
-                HttpRequest.builder()
-                    .method(HttpMethod.POST)
-                    .baseUrl(clientOptions.baseUrl())
-                    .addPathSegments("api", "v1", "nearest")
-                    .apply { params._body()?.let { body(json(clientOptions.jsonMapper, it)) } }
-                    .build()
-                    .prepareAsync(clientOptions, params)
-            val requestOptions = requestOptions.applyDefaults(RequestOptions.from(clientOptions))
-            val response = clientOptions.httpClient.executeAsync(request, requestOptions)
-            return errorHandler.handle(response).parseable {
-                response
-                    .use { nearestPostHandler.handle(it) }
                     .also {
                         if (requestOptions.responseValidation!!) {
                             it.validate()

@@ -14,7 +14,13 @@ import com.plazafyi.core.JsonValue
 import com.plazafyi.core.checkRequired
 import com.plazafyi.core.toImmutable
 import com.plazafyi.errors.PlazaInvalidDataException
-import com.plazafyi.models.GeoJsonGeometry
+import com.plazafyi.models.Geometry
+import com.plazafyi.models.LineStringGeometry
+import com.plazafyi.models.MultiLineStringGeometry
+import com.plazafyi.models.MultiPointGeometry
+import com.plazafyi.models.MultiPolygonGeometry
+import com.plazafyi.models.PointGeometry
+import com.plazafyi.models.PolygonGeometry
 import java.util.Collections
 import java.util.Objects
 
@@ -25,7 +31,7 @@ import java.util.Objects
 class GeocodingFeature
 @JsonCreator(mode = JsonCreator.Mode.DISABLED)
 private constructor(
-    private val geometry: JsonField<GeoJsonGeometry>,
+    private val geometry: JsonField<Geometry>,
     private val properties: JsonField<Properties>,
     private val type: JsonField<Type>,
     private val additionalProperties: MutableMap<String, JsonValue>,
@@ -33,9 +39,7 @@ private constructor(
 
     @JsonCreator
     private constructor(
-        @JsonProperty("geometry")
-        @ExcludeMissing
-        geometry: JsonField<GeoJsonGeometry> = JsonMissing.of(),
+        @JsonProperty("geometry") @ExcludeMissing geometry: JsonField<Geometry> = JsonMissing.of(),
         @JsonProperty("properties")
         @ExcludeMissing
         properties: JsonField<Properties> = JsonMissing.of(),
@@ -43,13 +47,13 @@ private constructor(
     ) : this(geometry, properties, type, mutableMapOf())
 
     /**
-     * GeoJSON Geometry object per RFC 7946. Coordinates use [longitude, latitude] order. 3D
-     * coordinates [lng, lat, elevation] are used for elevation endpoints.
+     * GeoJSON Geometry object per RFC 7946. Discriminated union — the `type` field determines the
+     * coordinate structure.
      *
      * @throws PlazaInvalidDataException if the JSON field has an unexpected type or is unexpectedly
      *   missing or null (e.g. if the server responded with an unexpected value).
      */
-    fun geometry(): GeoJsonGeometry = geometry.getRequired("geometry")
+    fun geometry(): Geometry = geometry.getRequired("geometry")
 
     /**
      * Geocoding result properties
@@ -70,7 +74,7 @@ private constructor(
      *
      * Unlike [geometry], this method doesn't throw if the JSON field has an unexpected type.
      */
-    @JsonProperty("geometry") @ExcludeMissing fun _geometry(): JsonField<GeoJsonGeometry> = geometry
+    @JsonProperty("geometry") @ExcludeMissing fun _geometry(): JsonField<Geometry> = geometry
 
     /**
      * Returns the raw JSON value of [properties].
@@ -118,7 +122,7 @@ private constructor(
     /** A builder for [GeocodingFeature]. */
     class Builder internal constructor() {
 
-        private var geometry: JsonField<GeoJsonGeometry>? = null
+        private var geometry: JsonField<Geometry>? = null
         private var properties: JsonField<Properties>? = null
         private var type: JsonField<Type>? = null
         private var additionalProperties: MutableMap<String, JsonValue> = mutableMapOf()
@@ -131,19 +135,141 @@ private constructor(
         }
 
         /**
-         * GeoJSON Geometry object per RFC 7946. Coordinates use [longitude, latitude] order. 3D
-         * coordinates [lng, lat, elevation] are used for elevation endpoints.
+         * GeoJSON Geometry object per RFC 7946. Discriminated union — the `type` field determines
+         * the coordinate structure.
          */
-        fun geometry(geometry: GeoJsonGeometry) = geometry(JsonField.of(geometry))
+        fun geometry(geometry: Geometry) = geometry(JsonField.of(geometry))
 
         /**
          * Sets [Builder.geometry] to an arbitrary JSON value.
          *
-         * You should usually call [Builder.geometry] with a well-typed [GeoJsonGeometry] value
-         * instead. This method is primarily for setting the field to an undocumented or not yet
-         * supported value.
+         * You should usually call [Builder.geometry] with a well-typed [Geometry] value instead.
+         * This method is primarily for setting the field to an undocumented or not yet supported
+         * value.
          */
-        fun geometry(geometry: JsonField<GeoJsonGeometry>) = apply { this.geometry = geometry }
+        fun geometry(geometry: JsonField<Geometry>) = apply { this.geometry = geometry }
+
+        /** Alias for calling [geometry] with `Geometry.ofPoint(point)`. */
+        fun geometry(point: PointGeometry) = geometry(Geometry.ofPoint(point))
+
+        /**
+         * Alias for calling [geometry] with the following:
+         * ```kotlin
+         * PointGeometry.builder()
+         *     .type(PointGeometry.Type.POINT)
+         *     .coordinates(coordinates)
+         *     .build()
+         * ```
+         */
+        fun pointGeometry(coordinates: List<Double>) =
+            geometry(
+                PointGeometry.builder()
+                    .type(PointGeometry.Type.POINT)
+                    .coordinates(coordinates)
+                    .build()
+            )
+
+        /** Alias for calling [geometry] with `Geometry.ofLineString(lineString)`. */
+        fun geometry(lineString: LineStringGeometry) = geometry(Geometry.ofLineString(lineString))
+
+        /**
+         * Alias for calling [geometry] with the following:
+         * ```kotlin
+         * LineStringGeometry.builder()
+         *     .type(LineStringGeometry.Type.LINE_STRING)
+         *     .coordinates(coordinates)
+         *     .build()
+         * ```
+         */
+        fun lineStringGeometry(coordinates: List<List<Double>>) =
+            geometry(
+                LineStringGeometry.builder()
+                    .type(LineStringGeometry.Type.LINE_STRING)
+                    .coordinates(coordinates)
+                    .build()
+            )
+
+        /** Alias for calling [geometry] with `Geometry.ofPolygon(polygon)`. */
+        fun geometry(polygon: PolygonGeometry) = geometry(Geometry.ofPolygon(polygon))
+
+        /**
+         * Alias for calling [geometry] with the following:
+         * ```kotlin
+         * PolygonGeometry.builder()
+         *     .type(PolygonGeometry.Type.POLYGON)
+         *     .coordinates(coordinates)
+         *     .build()
+         * ```
+         */
+        fun polygonGeometry(coordinates: List<List<List<Double>>>) =
+            geometry(
+                PolygonGeometry.builder()
+                    .type(PolygonGeometry.Type.POLYGON)
+                    .coordinates(coordinates)
+                    .build()
+            )
+
+        /** Alias for calling [geometry] with `Geometry.ofMultiPoint(multiPoint)`. */
+        fun geometry(multiPoint: MultiPointGeometry) = geometry(Geometry.ofMultiPoint(multiPoint))
+
+        /**
+         * Alias for calling [geometry] with the following:
+         * ```kotlin
+         * MultiPointGeometry.builder()
+         *     .type(MultiPointGeometry.Type.MULTI_POINT)
+         *     .coordinates(coordinates)
+         *     .build()
+         * ```
+         */
+        fun multiPointGeometry(coordinates: List<List<Double>>) =
+            geometry(
+                MultiPointGeometry.builder()
+                    .type(MultiPointGeometry.Type.MULTI_POINT)
+                    .coordinates(coordinates)
+                    .build()
+            )
+
+        /** Alias for calling [geometry] with `Geometry.ofMultiLineString(multiLineString)`. */
+        fun geometry(multiLineString: MultiLineStringGeometry) =
+            geometry(Geometry.ofMultiLineString(multiLineString))
+
+        /**
+         * Alias for calling [geometry] with the following:
+         * ```kotlin
+         * MultiLineStringGeometry.builder()
+         *     .type(MultiLineStringGeometry.Type.MULTI_LINE_STRING)
+         *     .coordinates(coordinates)
+         *     .build()
+         * ```
+         */
+        fun multiLineStringGeometry(coordinates: List<List<List<Double>>>) =
+            geometry(
+                MultiLineStringGeometry.builder()
+                    .type(MultiLineStringGeometry.Type.MULTI_LINE_STRING)
+                    .coordinates(coordinates)
+                    .build()
+            )
+
+        /** Alias for calling [geometry] with `Geometry.ofMultiPolygon(multiPolygon)`. */
+        fun geometry(multiPolygon: MultiPolygonGeometry) =
+            geometry(Geometry.ofMultiPolygon(multiPolygon))
+
+        /**
+         * Alias for calling [geometry] with the following:
+         * ```kotlin
+         * MultiPolygonGeometry.builder()
+         *     .type(MultiPolygonGeometry.Type.MULTI_POLYGON)
+         *     .coordinates(coordinates)
+         *     .build()
+         * ```
+         */
+        fun multiPolygonGeometry(coordinates: List<List<List<List<Double>>>>) =
+            geometry(
+                MultiPolygonGeometry.builder()
+                    .type(MultiPolygonGeometry.Type.MULTI_POLYGON)
+                    .coordinates(coordinates)
+                    .build()
+            )
 
         /** Geocoding result properties */
         fun properties(properties: Properties) = properties(JsonField.of(properties))
@@ -211,6 +337,14 @@ private constructor(
 
     private var validated: Boolean = false
 
+    /**
+     * Validates that the types of all values in this object match their expected types recursively.
+     *
+     * This method is _not_ forwards compatible with new types from the API for existing fields.
+     *
+     * @throws PlazaInvalidDataException if any value type in this object doesn't match its expected
+     *   type.
+     */
     fun validate(): GeocodingFeature = apply {
         if (validated) {
             return@apply
@@ -464,9 +598,9 @@ private constructor(
         fun score(): Double? = score.getNullable("score")
 
         /**
-         * Result source indicating how the result was found: structured (exact field match), bm25
-         * (full-text search), fuzzy (trigram similarity), address (reverse geocode address), place
-         * (reverse geocode POI), interpolation (estimated from neighboring addresses)
+         * Result source indicating how the result was found: structured (exact field match), fuzzy
+         * (trigram similarity), address (reverse geocode address), place (reverse geocode POI),
+         * interpolation (estimated from neighboring addresses)
          *
          * @throws PlazaInvalidDataException if the JSON field has an unexpected type (e.g. if the
          *   server responded with an unexpected value).
@@ -988,9 +1122,8 @@ private constructor(
 
             /**
              * Result source indicating how the result was found: structured (exact field match),
-             * bm25 (full-text search), fuzzy (trigram similarity), address (reverse geocode
-             * address), place (reverse geocode POI), interpolation (estimated from neighboring
-             * addresses)
+             * fuzzy (trigram similarity), address (reverse geocode address), place (reverse geocode
+             * POI), interpolation (estimated from neighboring addresses)
              */
             fun source(source: Source?) = source(JsonField.ofNullable(source))
 
@@ -1125,6 +1258,15 @@ private constructor(
 
         private var validated: Boolean = false
 
+        /**
+         * Validates that the types of all values in this object match their expected types
+         * recursively.
+         *
+         * This method is _not_ forwards compatible with new types from the API for existing fields.
+         *
+         * @throws PlazaInvalidDataException if any value type in this object doesn't match its
+         *   expected type.
+         */
         fun validate(): Properties = apply {
             if (validated) {
                 return@apply
@@ -1288,6 +1430,16 @@ private constructor(
 
             private var validated: Boolean = false
 
+            /**
+             * Validates that the types of all values in this object match their expected types
+             * recursively.
+             *
+             * This method is _not_ forwards compatible with new types from the API for existing
+             * fields.
+             *
+             * @throws PlazaInvalidDataException if any value type in this object doesn't match its
+             *   expected type.
+             */
             fun validate(): OsmType = apply {
                 if (validated) {
                     return@apply
@@ -1327,9 +1479,9 @@ private constructor(
         }
 
         /**
-         * Result source indicating how the result was found: structured (exact field match), bm25
-         * (full-text search), fuzzy (trigram similarity), address (reverse geocode address), place
-         * (reverse geocode POI), interpolation (estimated from neighboring addresses)
+         * Result source indicating how the result was found: structured (exact field match), fuzzy
+         * (trigram similarity), address (reverse geocode address), place (reverse geocode POI),
+         * interpolation (estimated from neighboring addresses)
          */
         class Source @JsonCreator private constructor(private val value: JsonField<String>) : Enum {
 
@@ -1347,8 +1499,6 @@ private constructor(
 
                 val STRUCTURED = of("structured")
 
-                val BM25 = of("bm25")
-
                 val FUZZY = of("fuzzy")
 
                 val ADDRESS = of("address")
@@ -1363,7 +1513,6 @@ private constructor(
             /** An enum containing [Source]'s known values. */
             enum class Known {
                 STRUCTURED,
-                BM25,
                 FUZZY,
                 ADDRESS,
                 PLACE,
@@ -1381,7 +1530,6 @@ private constructor(
              */
             enum class Value {
                 STRUCTURED,
-                BM25,
                 FUZZY,
                 ADDRESS,
                 PLACE,
@@ -1402,7 +1550,6 @@ private constructor(
             fun value(): Value =
                 when (this) {
                     STRUCTURED -> Value.STRUCTURED
-                    BM25 -> Value.BM25
                     FUZZY -> Value.FUZZY
                     ADDRESS -> Value.ADDRESS
                     PLACE -> Value.PLACE
@@ -1422,7 +1569,6 @@ private constructor(
             fun known(): Known =
                 when (this) {
                     STRUCTURED -> Known.STRUCTURED
-                    BM25 -> Known.BM25
                     FUZZY -> Known.FUZZY
                     ADDRESS -> Known.ADDRESS
                     PLACE -> Known.PLACE
@@ -1444,6 +1590,16 @@ private constructor(
 
             private var validated: Boolean = false
 
+            /**
+             * Validates that the types of all values in this object match their expected types
+             * recursively.
+             *
+             * This method is _not_ forwards compatible with new types from the API for existing
+             * fields.
+             *
+             * @throws PlazaInvalidDataException if any value type in this object doesn't match its
+             *   expected type.
+             */
             fun validate(): Source = apply {
                 if (validated) {
                     return@apply
@@ -1543,6 +1699,16 @@ private constructor(
 
             private var validated: Boolean = false
 
+            /**
+             * Validates that the types of all values in this object match their expected types
+             * recursively.
+             *
+             * This method is _not_ forwards compatible with new types from the API for existing
+             * fields.
+             *
+             * @throws PlazaInvalidDataException if any value type in this object doesn't match its
+             *   expected type.
+             */
             fun validate(): Tags = apply {
                 if (validated) {
                     return@apply
@@ -1726,6 +1892,15 @@ private constructor(
 
         private var validated: Boolean = false
 
+        /**
+         * Validates that the types of all values in this object match their expected types
+         * recursively.
+         *
+         * This method is _not_ forwards compatible with new types from the API for existing fields.
+         *
+         * @throws PlazaInvalidDataException if any value type in this object doesn't match its
+         *   expected type.
+         */
         fun validate(): Type = apply {
             if (validated) {
                 return@apply

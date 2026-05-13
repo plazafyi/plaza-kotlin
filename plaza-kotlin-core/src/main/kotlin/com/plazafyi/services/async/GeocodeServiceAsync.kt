@@ -6,16 +6,16 @@ import com.google.errorprone.annotations.MustBeClosed
 import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
+import com.plazafyi.models.geocode.AutocompleteRequest
 import com.plazafyi.models.geocode.AutocompleteResult
 import com.plazafyi.models.geocode.GeocodeAutocompleteParams
-import com.plazafyi.models.geocode.GeocodeAutocompletePostParams
 import com.plazafyi.models.geocode.GeocodeBatchParams
 import com.plazafyi.models.geocode.GeocodeBatchResponse
 import com.plazafyi.models.geocode.GeocodeForwardParams
-import com.plazafyi.models.geocode.GeocodeForwardPostParams
+import com.plazafyi.models.geocode.GeocodeForwardRequest
 import com.plazafyi.models.geocode.GeocodeResult
 import com.plazafyi.models.geocode.GeocodeReverseParams
-import com.plazafyi.models.geocode.GeocodeReversePostParams
+import com.plazafyi.models.geocode.GeocodeReverseRequest
 import com.plazafyi.models.geocode.ReverseGeocodeResult
 
 interface GeocodeServiceAsync {
@@ -38,11 +38,15 @@ interface GeocodeServiceAsync {
         requestOptions: RequestOptions = RequestOptions.none(),
     ): AutocompleteResult
 
-    /** Autocomplete a partial address */
-    suspend fun autocompletePost(
-        params: GeocodeAutocompletePostParams,
+    /** @see autocomplete */
+    suspend fun autocomplete(
+        autocompleteRequest: AutocompleteRequest,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): AutocompleteResult
+    ): AutocompleteResult =
+        autocomplete(
+            GeocodeAutocompleteParams.builder().autocompleteRequest(autocompleteRequest).build(),
+            requestOptions,
+        )
 
     /** Batch geocode multiple addresses */
     suspend fun batch(
@@ -56,31 +60,31 @@ interface GeocodeServiceAsync {
         requestOptions: RequestOptions = RequestOptions.none(),
     ): GeocodeResult
 
-    /** Forward geocode an address */
-    suspend fun forwardPost(
-        params: GeocodeForwardPostParams,
+    /** @see forward */
+    suspend fun forward(
+        geocodeForwardRequest: GeocodeForwardRequest,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): GeocodeResult
+    ): GeocodeResult =
+        forward(
+            GeocodeForwardParams.builder().geocodeForwardRequest(geocodeForwardRequest).build(),
+            requestOptions,
+        )
 
     /** Reverse geocode a coordinate */
     suspend fun reverse(
-        params: GeocodeReverseParams = GeocodeReverseParams.none(),
+        params: GeocodeReverseParams,
         requestOptions: RequestOptions = RequestOptions.none(),
     ): ReverseGeocodeResult
 
     /** @see reverse */
-    suspend fun reverse(requestOptions: RequestOptions): ReverseGeocodeResult =
-        reverse(GeocodeReverseParams.none(), requestOptions)
-
-    /** Reverse geocode a coordinate */
-    suspend fun reversePost(
-        params: GeocodeReversePostParams = GeocodeReversePostParams.none(),
+    suspend fun reverse(
+        geocodeReverseRequest: GeocodeReverseRequest,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): ReverseGeocodeResult
-
-    /** @see reversePost */
-    suspend fun reversePost(requestOptions: RequestOptions): ReverseGeocodeResult =
-        reversePost(GeocodeReversePostParams.none(), requestOptions)
+    ): ReverseGeocodeResult =
+        reverse(
+            GeocodeReverseParams.builder().geocodeReverseRequest(geocodeReverseRequest).build(),
+            requestOptions,
+        )
 
     /**
      * A view of [GeocodeServiceAsync] that provides access to raw HTTP responses for each method.
@@ -97,7 +101,7 @@ interface GeocodeServiceAsync {
         ): GeocodeServiceAsync.WithRawResponse
 
         /**
-         * Returns a raw HTTP response for `get /api/v1/geocode/autocomplete`, but is otherwise the
+         * Returns a raw HTTP response for `post /api/v1/geocode/autocomplete`, but is otherwise the
          * same as [GeocodeServiceAsync.autocomplete].
          */
         @MustBeClosed
@@ -106,15 +110,18 @@ interface GeocodeServiceAsync {
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<AutocompleteResult>
 
-        /**
-         * Returns a raw HTTP response for `post /api/v1/geocode/autocomplete`, but is otherwise the
-         * same as [GeocodeServiceAsync.autocompletePost].
-         */
+        /** @see autocomplete */
         @MustBeClosed
-        suspend fun autocompletePost(
-            params: GeocodeAutocompletePostParams,
+        suspend fun autocomplete(
+            autocompleteRequest: AutocompleteRequest,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<AutocompleteResult>
+        ): HttpResponseFor<AutocompleteResult> =
+            autocomplete(
+                GeocodeAutocompleteParams.builder()
+                    .autocompleteRequest(autocompleteRequest)
+                    .build(),
+                requestOptions,
+            )
 
         /**
          * Returns a raw HTTP response for `post /api/v1/geocode/batch`, but is otherwise the same
@@ -127,7 +134,7 @@ interface GeocodeServiceAsync {
         ): HttpResponseFor<GeocodeBatchResponse>
 
         /**
-         * Returns a raw HTTP response for `get /api/v1/geocode`, but is otherwise the same as
+         * Returns a raw HTTP response for `post /api/v1/geocode`, but is otherwise the same as
          * [GeocodeServiceAsync.forward].
          */
         @MustBeClosed
@@ -136,46 +143,36 @@ interface GeocodeServiceAsync {
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<GeocodeResult>
 
-        /**
-         * Returns a raw HTTP response for `post /api/v1/geocode`, but is otherwise the same as
-         * [GeocodeServiceAsync.forwardPost].
-         */
+        /** @see forward */
         @MustBeClosed
-        suspend fun forwardPost(
-            params: GeocodeForwardPostParams,
+        suspend fun forward(
+            geocodeForwardRequest: GeocodeForwardRequest,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<GeocodeResult>
+        ): HttpResponseFor<GeocodeResult> =
+            forward(
+                GeocodeForwardParams.builder().geocodeForwardRequest(geocodeForwardRequest).build(),
+                requestOptions,
+            )
 
         /**
-         * Returns a raw HTTP response for `get /api/v1/geocode/reverse`, but is otherwise the same
+         * Returns a raw HTTP response for `post /api/v1/geocode/reverse`, but is otherwise the same
          * as [GeocodeServiceAsync.reverse].
          */
         @MustBeClosed
         suspend fun reverse(
-            params: GeocodeReverseParams = GeocodeReverseParams.none(),
+            params: GeocodeReverseParams,
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<ReverseGeocodeResult>
 
         /** @see reverse */
         @MustBeClosed
-        suspend fun reverse(requestOptions: RequestOptions): HttpResponseFor<ReverseGeocodeResult> =
-            reverse(GeocodeReverseParams.none(), requestOptions)
-
-        /**
-         * Returns a raw HTTP response for `post /api/v1/geocode/reverse`, but is otherwise the same
-         * as [GeocodeServiceAsync.reversePost].
-         */
-        @MustBeClosed
-        suspend fun reversePost(
-            params: GeocodeReversePostParams = GeocodeReversePostParams.none(),
+        suspend fun reverse(
+            geocodeReverseRequest: GeocodeReverseRequest,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<ReverseGeocodeResult>
-
-        /** @see reversePost */
-        @MustBeClosed
-        suspend fun reversePost(
-            requestOptions: RequestOptions
         ): HttpResponseFor<ReverseGeocodeResult> =
-            reversePost(GeocodeReversePostParams.none(), requestOptions)
+            reverse(
+                GeocodeReverseParams.builder().geocodeReverseRequest(geocodeReverseRequest).build(),
+                requestOptions,
+            )
     }
 }

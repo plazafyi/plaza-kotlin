@@ -4,9 +4,8 @@ package com.plazafyi.services.async
 
 import com.plazafyi.TestServerExtension
 import com.plazafyi.client.okhttp.PlazaOkHttpClientAsync
-import com.plazafyi.models.query.OverpassQuery
+import com.plazafyi.models.query.PlazaqlQuery
 import com.plazafyi.models.query.QueryExecuteParams
-import com.plazafyi.models.query.SparqlQuery
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -22,58 +21,20 @@ internal class QueryServiceAsyncTest {
                 .build()
         val queryServiceAsync = client.query()
 
-        val response =
+        val featureCollection =
             queryServiceAsync.execute(
                 QueryExecuteParams.builder()
-                    .addStep(
-                        QueryExecuteParams.Step.builder()
-                            .type(QueryExecuteParams.Step.Type.OVERPASS)
-                            .query("query")
+                    .format("format")
+                    .plazaqlQuery(
+                        PlazaqlQuery.builder()
+                            .data(
+                                "\$\$ = search(node, amenity: \"cafe\").around(distance: 500, geometry: point(48.8566, 2.3522));"
+                            )
                             .build()
                     )
                     .build()
             )
 
-        response.validate()
-    }
-
-    @Test
-    suspend fun overpass() {
-        val client =
-            PlazaOkHttpClientAsync.builder()
-                .baseUrl(TestServerExtension.BASE_URL)
-                .apiKey("My API Key")
-                .build()
-        val queryServiceAsync = client.query()
-
-        val featureCollection =
-            queryServiceAsync.overpass(
-                OverpassQuery.builder()
-                    .data("[out:json];node[amenity=cafe](around:500,48.8566,2.3522);out body;")
-                    .build()
-            )
-
         featureCollection.validate()
-    }
-
-    @Test
-    suspend fun sparql() {
-        val client =
-            PlazaOkHttpClientAsync.builder()
-                .baseUrl(TestServerExtension.BASE_URL)
-                .apiKey("My API Key")
-                .build()
-        val queryServiceAsync = client.query()
-
-        val sparqlResult =
-            queryServiceAsync.sparql(
-                SparqlQuery.builder()
-                    .query(
-                        "SELECT ?s ?name WHERE { ?s osm:name ?name . ?s osm:amenity \"cafe\" } LIMIT 10"
-                    )
-                    .build()
-            )
-
-        sparqlResult.validate()
     }
 }

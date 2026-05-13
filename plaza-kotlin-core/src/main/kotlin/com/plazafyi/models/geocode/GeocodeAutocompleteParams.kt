@@ -2,6 +2,7 @@
 
 package com.plazafyi.models.geocode
 
+import com.plazafyi.core.JsonValue
 import com.plazafyi.core.Params
 import com.plazafyi.core.checkRequired
 import com.plazafyi.core.http.Headers
@@ -11,37 +12,20 @@ import java.util.Objects
 /** Autocomplete a partial address */
 class GeocodeAutocompleteParams
 private constructor(
-    private val q: String,
-    private val countryCode: String?,
-    private val lang: String?,
-    private val lat: Double?,
-    private val layer: String?,
-    private val limit: Long?,
-    private val lng: Double?,
+    private val format: String?,
+    private val autocompleteRequest: AutocompleteRequest,
     private val additionalHeaders: Headers,
     private val additionalQueryParams: QueryParams,
 ) : Params {
 
-    /** Partial address query */
-    fun q(): String = q
+    /** Response format: json (default), geojson, csv, ndjson */
+    fun format(): String? = format
 
-    /** ISO 3166-1 alpha-2 country code filter */
-    fun countryCode(): String? = countryCode
+    /** Request body for autocomplete suggestions. Optimized for low-latency type-ahead UIs. */
+    fun autocompleteRequest(): AutocompleteRequest = autocompleteRequest
 
-    /** Language code for localized names (e.g. en, de, fr) */
-    fun lang(): String? = lang
-
-    /** Focus latitude */
-    fun lat(): Double? = lat
-
-    /** Filter by layer: address, poi, or admin */
-    fun layer(): String? = layer
-
-    /** Maximum results (default 10, max 20) */
-    fun limit(): Long? = limit
-
-    /** Focus longitude */
-    fun lng(): Double? = lng
+    fun _additionalBodyProperties(): Map<String, JsonValue> =
+        autocompleteRequest._additionalProperties()
 
     /** Additional headers to send with the request. */
     fun _additionalHeaders(): Headers = additionalHeaders
@@ -58,7 +42,7 @@ private constructor(
          *
          * The following fields are required:
          * ```kotlin
-         * .q()
+         * .autocompleteRequest()
          * ```
          */
         fun builder() = Builder()
@@ -67,69 +51,25 @@ private constructor(
     /** A builder for [GeocodeAutocompleteParams]. */
     class Builder internal constructor() {
 
-        private var q: String? = null
-        private var countryCode: String? = null
-        private var lang: String? = null
-        private var lat: Double? = null
-        private var layer: String? = null
-        private var limit: Long? = null
-        private var lng: Double? = null
+        private var format: String? = null
+        private var autocompleteRequest: AutocompleteRequest? = null
         private var additionalHeaders: Headers.Builder = Headers.builder()
         private var additionalQueryParams: QueryParams.Builder = QueryParams.builder()
 
         internal fun from(geocodeAutocompleteParams: GeocodeAutocompleteParams) = apply {
-            q = geocodeAutocompleteParams.q
-            countryCode = geocodeAutocompleteParams.countryCode
-            lang = geocodeAutocompleteParams.lang
-            lat = geocodeAutocompleteParams.lat
-            layer = geocodeAutocompleteParams.layer
-            limit = geocodeAutocompleteParams.limit
-            lng = geocodeAutocompleteParams.lng
+            format = geocodeAutocompleteParams.format
+            autocompleteRequest = geocodeAutocompleteParams.autocompleteRequest
             additionalHeaders = geocodeAutocompleteParams.additionalHeaders.toBuilder()
             additionalQueryParams = geocodeAutocompleteParams.additionalQueryParams.toBuilder()
         }
 
-        /** Partial address query */
-        fun q(q: String) = apply { this.q = q }
+        /** Response format: json (default), geojson, csv, ndjson */
+        fun format(format: String?) = apply { this.format = format }
 
-        /** ISO 3166-1 alpha-2 country code filter */
-        fun countryCode(countryCode: String?) = apply { this.countryCode = countryCode }
-
-        /** Language code for localized names (e.g. en, de, fr) */
-        fun lang(lang: String?) = apply { this.lang = lang }
-
-        /** Focus latitude */
-        fun lat(lat: Double?) = apply { this.lat = lat }
-
-        /**
-         * Alias for [Builder.lat].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun lat(lat: Double) = lat(lat as Double?)
-
-        /** Filter by layer: address, poi, or admin */
-        fun layer(layer: String?) = apply { this.layer = layer }
-
-        /** Maximum results (default 10, max 20) */
-        fun limit(limit: Long?) = apply { this.limit = limit }
-
-        /**
-         * Alias for [Builder.limit].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun limit(limit: Long) = limit(limit as Long?)
-
-        /** Focus longitude */
-        fun lng(lng: Double?) = apply { this.lng = lng }
-
-        /**
-         * Alias for [Builder.lng].
-         *
-         * This unboxed primitive overload exists for backwards compatibility.
-         */
-        fun lng(lng: Double) = lng(lng as Double?)
+        /** Request body for autocomplete suggestions. Optimized for low-latency type-ahead UIs. */
+        fun autocompleteRequest(autocompleteRequest: AutocompleteRequest) = apply {
+            this.autocompleteRequest = autocompleteRequest
+        }
 
         fun additionalHeaders(additionalHeaders: Headers) = apply {
             this.additionalHeaders.clear()
@@ -236,37 +176,28 @@ private constructor(
          *
          * The following fields are required:
          * ```kotlin
-         * .q()
+         * .autocompleteRequest()
          * ```
          *
          * @throws IllegalStateException if any required field is unset.
          */
         fun build(): GeocodeAutocompleteParams =
             GeocodeAutocompleteParams(
-                checkRequired("q", q),
-                countryCode,
-                lang,
-                lat,
-                layer,
-                limit,
-                lng,
+                format,
+                checkRequired("autocompleteRequest", autocompleteRequest),
                 additionalHeaders.build(),
                 additionalQueryParams.build(),
             )
     }
+
+    fun _body(): AutocompleteRequest = autocompleteRequest
 
     override fun _headers(): Headers = additionalHeaders
 
     override fun _queryParams(): QueryParams =
         QueryParams.builder()
             .apply {
-                put("q", q)
-                countryCode?.let { put("country_code", it) }
-                lang?.let { put("lang", it) }
-                lat?.let { put("lat", it.toString()) }
-                layer?.let { put("layer", it) }
-                limit?.let { put("limit", it.toString()) }
-                lng?.let { put("lng", it.toString()) }
+                format?.let { put("format", it) }
                 putAll(additionalQueryParams)
             }
             .build()
@@ -277,30 +208,15 @@ private constructor(
         }
 
         return other is GeocodeAutocompleteParams &&
-            q == other.q &&
-            countryCode == other.countryCode &&
-            lang == other.lang &&
-            lat == other.lat &&
-            layer == other.layer &&
-            limit == other.limit &&
-            lng == other.lng &&
+            format == other.format &&
+            autocompleteRequest == other.autocompleteRequest &&
             additionalHeaders == other.additionalHeaders &&
             additionalQueryParams == other.additionalQueryParams
     }
 
     override fun hashCode(): Int =
-        Objects.hash(
-            q,
-            countryCode,
-            lang,
-            lat,
-            layer,
-            limit,
-            lng,
-            additionalHeaders,
-            additionalQueryParams,
-        )
+        Objects.hash(format, autocompleteRequest, additionalHeaders, additionalQueryParams)
 
     override fun toString() =
-        "GeocodeAutocompleteParams{q=$q, countryCode=$countryCode, lang=$lang, lat=$lat, layer=$layer, limit=$limit, lng=$lng, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
+        "GeocodeAutocompleteParams{format=$format, autocompleteRequest=$autocompleteRequest, additionalHeaders=$additionalHeaders, additionalQueryParams=$additionalQueryParams}"
 }

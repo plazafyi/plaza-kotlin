@@ -7,13 +7,8 @@ import com.plazafyi.core.ClientOptions
 import com.plazafyi.core.RequestOptions
 import com.plazafyi.core.http.HttpResponseFor
 import com.plazafyi.models.FeatureCollection
-import com.plazafyi.models.query.OverpassQuery
+import com.plazafyi.models.query.PlazaqlQuery
 import com.plazafyi.models.query.QueryExecuteParams
-import com.plazafyi.models.query.QueryExecuteResponse
-import com.plazafyi.models.query.QueryOverpassParams
-import com.plazafyi.models.query.QuerySparqlParams
-import com.plazafyi.models.query.SparqlQuery
-import com.plazafyi.models.query.SparqlResult
 
 interface QueryService {
 
@@ -29,37 +24,18 @@ interface QueryService {
      */
     fun withOptions(modifier: (ClientOptions.Builder) -> Unit): QueryService
 
-    /** Execute a multi-step query pipeline */
+    /** Execute a PlazaQL query */
     fun execute(
         params: QueryExecuteParams,
         requestOptions: RequestOptions = RequestOptions.none(),
-    ): QueryExecuteResponse
-
-    /** Execute an Overpass QL query */
-    fun overpass(
-        params: QueryOverpassParams,
-        requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection
 
-    /** @see overpass */
-    fun overpass(
-        overpassQuery: OverpassQuery,
+    /** @see execute */
+    fun execute(
+        plazaqlQuery: PlazaqlQuery,
         requestOptions: RequestOptions = RequestOptions.none(),
     ): FeatureCollection =
-        overpass(QueryOverpassParams.builder().overpassQuery(overpassQuery).build(), requestOptions)
-
-    /** Execute a SPARQL query */
-    fun sparql(
-        params: QuerySparqlParams,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): SparqlResult
-
-    /** @see sparql */
-    fun sparql(
-        sparqlQuery: SparqlQuery,
-        requestOptions: RequestOptions = RequestOptions.none(),
-    ): SparqlResult =
-        sparql(QuerySparqlParams.builder().sparqlQuery(sparqlQuery).build(), requestOptions)
+        execute(QueryExecuteParams.builder().plazaqlQuery(plazaqlQuery).build(), requestOptions)
 
     /** A view of [QueryService] that provides access to raw HTTP responses for each method. */
     interface WithRawResponse {
@@ -79,45 +55,14 @@ interface QueryService {
         fun execute(
             params: QueryExecuteParams,
             requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<QueryExecuteResponse>
-
-        /**
-         * Returns a raw HTTP response for `post /api/v1/overpass`, but is otherwise the same as
-         * [QueryService.overpass].
-         */
-        @MustBeClosed
-        fun overpass(
-            params: QueryOverpassParams,
-            requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<FeatureCollection>
 
-        /** @see overpass */
+        /** @see execute */
         @MustBeClosed
-        fun overpass(
-            overpassQuery: OverpassQuery,
+        fun execute(
+            plazaqlQuery: PlazaqlQuery,
             requestOptions: RequestOptions = RequestOptions.none(),
         ): HttpResponseFor<FeatureCollection> =
-            overpass(
-                QueryOverpassParams.builder().overpassQuery(overpassQuery).build(),
-                requestOptions,
-            )
-
-        /**
-         * Returns a raw HTTP response for `post /api/v1/sparql`, but is otherwise the same as
-         * [QueryService.sparql].
-         */
-        @MustBeClosed
-        fun sparql(
-            params: QuerySparqlParams,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<SparqlResult>
-
-        /** @see sparql */
-        @MustBeClosed
-        fun sparql(
-            sparqlQuery: SparqlQuery,
-            requestOptions: RequestOptions = RequestOptions.none(),
-        ): HttpResponseFor<SparqlResult> =
-            sparql(QuerySparqlParams.builder().sparqlQuery(sparqlQuery).build(), requestOptions)
+            execute(QueryExecuteParams.builder().plazaqlQuery(plazaqlQuery).build(), requestOptions)
     }
 }

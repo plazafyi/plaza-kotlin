@@ -2,8 +2,8 @@
 
 <!-- x-release-please-start-version -->
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.plazafyi/plaza-kotlin)](https://central.sonatype.com/artifact/com.plazafyi/plaza-kotlin/0.1.0)
-[![javadoc](https://javadoc.io/badge2/com.plazafyi/plaza-kotlin/0.1.0/javadoc.svg)](https://javadoc.io/doc/com.plazafyi/plaza-kotlin/0.1.0)
+[![Maven Central](https://img.shields.io/maven-central/v/com.plazafyi/plaza-kotlin)](https://central.sonatype.com/artifact/com.plazafyi/plaza-kotlin/0.2.0)
+[![javadoc](https://javadoc.io/badge2/com.plazafyi/plaza-kotlin/0.2.0/javadoc.svg)](https://javadoc.io/doc/com.plazafyi/plaza-kotlin/0.2.0)
 
 <!-- x-release-please-end -->
 
@@ -24,7 +24,7 @@ Use the Plaza MCP Server to enable AI assistants to interact with this API, allo
 
 <!-- x-release-please-start-version -->
 
-The REST API documentation can be found on [docs.plaza.fyi](https://docs.plaza.fyi). KDocs are available on [javadoc.io](https://javadoc.io/doc/com.plazafyi/plaza-kotlin/0.1.0).
+The REST API documentation can be found on [docs.plaza.fyi](https://docs.plaza.fyi). KDocs are available on [javadoc.io](https://javadoc.io/doc/com.plazafyi/plaza-kotlin/0.2.0).
 
 <!-- x-release-please-end -->
 
@@ -35,7 +35,7 @@ The REST API documentation can be found on [docs.plaza.fyi](https://docs.plaza.f
 ### Gradle
 
 ```kotlin
-implementation("com.plazafyi:plaza-kotlin:0.1.0")
+implementation("com.plazafyi:plaza-kotlin:0.2.0")
 ```
 
 ### Maven
@@ -44,7 +44,7 @@ implementation("com.plazafyi:plaza-kotlin:0.1.0")
 <dependency>
   <groupId>com.plazafyi</groupId>
   <artifactId>plaza-kotlin</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
@@ -60,17 +60,13 @@ This library requires Java 8 or later.
 import com.plazafyi.client.PlazaClient
 import com.plazafyi.client.okhttp.PlazaOkHttpClient
 import com.plazafyi.models.FeatureCollection
-import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.features.FeatureQueryParams
 
 // Configures using the `plaza.apiKey` and `plaza.baseUrl` system properties
 // Or configures using the `PLAZA_API_KEY` and `PLAZA_BASE_URL` environment variables
 val client: PlazaClient = PlazaOkHttpClient.fromEnv()
 
-val params: ElementQueryParams = ElementQueryParams.builder()
-    .near("48.8584,2.2945")
-    .radius(500.0)
-    .build()
-val featureCollection: FeatureCollection = client.elements().query(params)
+val featureCollection: FeatureCollection = client.features().query()
 ```
 
 ## Client configuration
@@ -143,7 +139,7 @@ The `withOptions()` method does not affect the original client or service.
 
 To send a request to the Plaza API, build an instance of some `Params` class and pass it to the corresponding client method. When the response is received, it will be deserialized into an instance of a Kotlin class.
 
-For example, `client.elements().query(...)` should be called with an instance of `ElementQueryParams`, and it will return an instance of `FeatureCollection`.
+For example, `client.features().query(...)` should be called with an instance of `FeatureQueryParams`, and it will return an instance of `FeatureCollection`.
 
 ## Immutability
 
@@ -161,17 +157,13 @@ The default client is synchronous. To switch to asynchronous execution, call the
 import com.plazafyi.client.PlazaClient
 import com.plazafyi.client.okhttp.PlazaOkHttpClient
 import com.plazafyi.models.FeatureCollection
-import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.features.FeatureQueryParams
 
 // Configures using the `plaza.apiKey` and `plaza.baseUrl` system properties
 // Or configures using the `PLAZA_API_KEY` and `PLAZA_BASE_URL` environment variables
 val client: PlazaClient = PlazaOkHttpClient.fromEnv()
 
-val params: ElementQueryParams = ElementQueryParams.builder()
-    .near("48.8584,2.2945")
-    .radius(500.0)
-    .build()
-val featureCollection: FeatureCollection = client.async().elements().query(params)
+val featureCollection: FeatureCollection = client.async().features().query()
 ```
 
 Or create an asynchronous client from the beginning:
@@ -180,17 +172,13 @@ Or create an asynchronous client from the beginning:
 import com.plazafyi.client.PlazaClientAsync
 import com.plazafyi.client.okhttp.PlazaOkHttpClientAsync
 import com.plazafyi.models.FeatureCollection
-import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.features.FeatureQueryParams
 
 // Configures using the `plaza.apiKey` and `plaza.baseUrl` system properties
 // Or configures using the `PLAZA_API_KEY` and `PLAZA_BASE_URL` environment variables
 val client: PlazaClientAsync = PlazaOkHttpClientAsync.fromEnv()
 
-val params: ElementQueryParams = ElementQueryParams.builder()
-    .near("48.8584,2.2945")
-    .radius(500.0)
-    .build()
-val featureCollection: FeatureCollection = client.elements().query(params)
+val featureCollection: FeatureCollection = client.features().query()
 ```
 
 The asynchronous client supports the same options as the synchronous one, except most methods are [suspending](https://kotlinlang.org/docs/coroutines-guide.html).
@@ -250,13 +238,9 @@ To access this data, prefix any HTTP method call on a client or service with `wi
 import com.plazafyi.core.http.Headers
 import com.plazafyi.core.http.HttpResponseFor
 import com.plazafyi.models.FeatureCollection
-import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.features.FeatureQueryParams
 
-val params: ElementQueryParams = ElementQueryParams.builder()
-    .near("48.8584,2.2945")
-    .radius(500.0)
-    .build()
-val featureCollection: HttpResponseFor<FeatureCollection> = client.elements().withRawResponse().query(params)
+val featureCollection: HttpResponseFor<FeatureCollection> = client.features().withRawResponse().query()
 
 val statusCode: Int = featureCollection.statusCode()
 val headers: Headers = featureCollection.headers()
@@ -297,8 +281,6 @@ The SDK throws custom unchecked exception types:
 
 ## Logging
 
-The SDK uses the standard [OkHttp logging interceptor](https://github.com/square/okhttp/tree/master/okhttp-logging-interceptor).
-
 Enable logging by setting the `PLAZA_LOG` environment variable to `info`:
 
 ```sh
@@ -309,6 +291,19 @@ Or to `debug` for more verbose logging:
 
 ```sh
 export PLAZA_LOG=debug
+```
+
+Or configure the client manually using the `logLevel` method:
+
+```kotlin
+import com.plazafyi.client.PlazaClient
+import com.plazafyi.client.okhttp.PlazaOkHttpClient
+import com.plazafyi.core.LogLevel
+
+val client: PlazaClient = PlazaOkHttpClient.builder()
+    .fromEnv()
+    .logLevel(LogLevel.INFO)
+    .build()
 ```
 
 ## ProGuard and R8
@@ -367,7 +362,7 @@ To set a custom timeout, configure the method call using the `timeout` method:
 ```kotlin
 import com.plazafyi.models.FeatureCollection
 
-val featureCollection: FeatureCollection = client.elements().query(RequestOptions.builder().timeout(Duration.ofSeconds(30)).build())
+val featureCollection: FeatureCollection = client.features().query(RequestOptions.builder().timeout(Duration.ofSeconds(30)).build())
 ```
 
 Or configure the default for all method calls at the client level:
@@ -400,6 +395,21 @@ val client: PlazaClient = PlazaOkHttpClient.builder()
         "https://example.com", 8080
       )
     ))
+    .build()
+```
+
+If the proxy responds with `407 Proxy Authentication Required`, supply credentials by also configuring `proxyAuthenticator`:
+
+```kotlin
+import com.plazafyi.client.PlazaClient
+import com.plazafyi.client.okhttp.PlazaOkHttpClient
+import com.plazafyi.core.http.ProxyAuthenticator
+
+val client: PlazaClient = PlazaOkHttpClient.builder()
+    .fromEnv()
+    .proxy(...)
+    // Or a custom implementation of `ProxyAuthenticator`.
+    .proxyAuthenticator(ProxyAuthenticator.basic("username", "password"))
     .build()
 ```
 
@@ -503,9 +513,9 @@ To set undocumented parameters, call the `putAdditionalHeader`, `putAdditionalQu
 
 ```kotlin
 import com.plazafyi.core.JsonValue
-import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.features.FeatureQueryParams
 
-val params: ElementQueryParams = ElementQueryParams.builder()
+val params: FeatureQueryParams = FeatureQueryParams.builder()
     .putAdditionalHeader("Secret-Header", "42")
     .putAdditionalQueryParam("secret_query_param", "42")
     .putAdditionalBodyProperty("secretProperty", JsonValue.from("42"))
@@ -517,12 +527,9 @@ These can be accessed on the built object later using the `_additionalHeaders()`
 To set a documented parameter or property to an undocumented or not yet supported _value_, pass a [`JsonValue`](plaza-kotlin-core/src/main/kotlin/com/plazafyi/core/Values.kt) object to its setter:
 
 ```kotlin
-import com.plazafyi.models.elements.ElementQueryParams
+import com.plazafyi.models.features.FeatureQueryParams
 
-val params: ElementQueryParams = ElementQueryParams.builder()
-    .near("48.8584,2.2945")
-    .radius(500.0)
-    .build()
+val params: FeatureQueryParams = FeatureQueryParams.builder().build()
 ```
 
 The most straightforward way to create a [`JsonValue`](plaza-kotlin-core/src/main/kotlin/com/plazafyi/core/Values.kt) is using its `from(...)` method:
@@ -566,10 +573,10 @@ To forcibly omit a required parameter or property, pass [`JsonMissing`](plaza-ko
 
 ```kotlin
 import com.plazafyi.core.JsonMissing
-import com.plazafyi.models.elements.ElementQueryParams
-import com.plazafyi.models.elements.ElementRetrieveParams
+import com.plazafyi.models.features.FeatureQueryParams
+import com.plazafyi.models.features.FeatureRetrieveParams
 
-val params: ElementQueryParams = ElementRetrieveParams.builder()
+val params: FeatureQueryParams = FeatureRetrieveParams.builder()
     .type(JsonMissing.of())
     .build()
 ```
@@ -584,7 +591,7 @@ import com.plazafyi.core.JsonNull
 import com.plazafyi.core.JsonNumber
 import com.plazafyi.core.JsonValue
 
-val additionalProperties: Map<String, JsonValue> = client.elements().query(params)._additionalProperties()
+val additionalProperties: Map<String, JsonValue> = client.features().query(params)._additionalProperties()
 val secretPropertyValue: JsonValue = additionalProperties.get("secretProperty")
 
 val result = when (secretPropertyValue) {
@@ -601,7 +608,7 @@ To access a property's raw JSON value, which may be undocumented, call its `_` p
 ```kotlin
 import com.plazafyi.core.JsonField
 
-val field: JsonField<Any> = client.elements().query(params)._field()
+val field: JsonField<Any> = client.features().query(params)._field()
 
 if (field.isMissing()) {
   // The property is absent from the JSON response
@@ -623,12 +630,14 @@ In rare cases, the API may return a response that doesn't match the expected typ
 
 By default, the SDK will not throw an exception in this case. It will throw [`PlazaInvalidDataException`](plaza-kotlin-core/src/main/kotlin/com/plazafyi/errors/PlazaInvalidDataException.kt) only if you directly access the property.
 
-If you would prefer to check that the response is completely well-typed upfront, then either call `validate()`:
+Validating the response is _not_ forwards compatible with new types from the API for existing fields.
+
+If you would still prefer to check that the response is completely well-typed upfront, then either call `validate()`:
 
 ```kotlin
 import com.plazafyi.models.FeatureCollection
 
-val featureCollection: FeatureCollection = client.elements().query(params).validate()
+val featureCollection: FeatureCollection = client.features().query(params).validate()
 ```
 
 Or configure the method call to validate the response using the `responseValidation` method:
@@ -636,7 +645,7 @@ Or configure the method call to validate the response using the `responseValidat
 ```kotlin
 import com.plazafyi.models.FeatureCollection
 
-val featureCollection: FeatureCollection = client.elements().query(RequestOptions.builder().responseValidation(true).build())
+val featureCollection: FeatureCollection = client.features().query(RequestOptions.builder().responseValidation(true).build())
 ```
 
 Or configure the default for all method calls at the client level:
